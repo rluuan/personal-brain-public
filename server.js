@@ -13,48 +13,28 @@ import { createRequire } from 'module'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const CONFIG_FILE = path.join(__dirname, 'db-config.json')
 
-// --- Config Loading with Auto-Creation ---
+// --- Config ------------------------------------------------------------------
 const DEFAULT_CONFIG = {
   dbType: 'sqlite',
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-  password: 'postgres',
-  database: 'postgres',
+  host: process.env.PG_HOST || 'localhost',
+  port: Number(process.env.PG_PORT) || 5432,
+  user: process.env.PG_USER || 'postgres',
+  password: process.env.PG_PASSWORD || 'postgres',
+  database: process.env.PG_DB || 'postgres',
   sqliteFile: './brain.db'
 }
 
-let config = DEFAULT_CONFIG
-if (fs.existsSync(CONFIG_FILE)) {
-  try {
-    config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'))
-  } catch (e) {
-    console.warn('[Config] Erro ao carregar db-config.json, usando padrão.')
-  }
-} else {
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(DEFAULT_CONFIG, null, 2))
-}
-
-const SQLITE_FILE = path.resolve(__dirname, config.sqliteFile || './brain.db')
-const USE_SQLITE = config.dbType === 'sqlite'
-
-const { Pool } = pg
-const rssParser = new RssParser()
-
-// --- Config ------------------------------------------------------------------
-
 function loadConfig() {
   if (fs.existsSync(CONFIG_FILE)) {
-    try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')) } catch {}
+    try {
+      return { ...DEFAULT_CONFIG, ...JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')) }
+    } catch (e) {
+      console.warn('[Config] Erro ao carregar db-config.json, usando padrão.')
+    }
+  } else {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(DEFAULT_CONFIG, null, 2))
   }
-  return {
-    dbType: 'postgres',
-    host: process.env.PG_HOST || 'localhost',
-    port: Number(process.env.PG_PORT) || 5432,
-    user: process.env.PG_USER || 'postgres',
-    password: process.env.PG_PASSWORD || 'postgres',
-    database: process.env.PG_DB || 'postgres',
-  }
+  return DEFAULT_CONFIG
 }
 
 function saveConfig(cfg) {
@@ -62,12 +42,15 @@ function saveConfig(cfg) {
 }
 
 let config = loadConfig()
+const SQLITE_FILE = path.resolve(__dirname, config.sqliteFile || './brain.db')
+let USE_SQLITE = config.dbType === 'sqlite'
 
+const { Pool } = pg
+const rssParser = new RssParser()
 // --- DB Abstraction ----------------------------------------------------------
 
 let pgPool = null
 let sqliteDb = null
-let USE_SQLITE = config.dbType === 'sqlite'
 
 function getSqlite() {
   if (!sqliteDb) {
