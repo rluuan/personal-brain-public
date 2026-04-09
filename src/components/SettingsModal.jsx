@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import {
   X, Palette, Check, Lock, Eye, EyeOff, ShieldCheck, AlertTriangle,
   Database, Download, FolderOpen, RefreshCw, Server, HardDrive,
-  Brain, Wifi, WifiOff,
+  Brain, Wifi, WifiOff, Keyboard,
 } from 'lucide-react'
 import { useNotesStore } from '../store/useNotesStore'
 import { localStorageKey, encryptText } from '../crypto'
@@ -169,11 +169,12 @@ export default function SettingsModal({ onClose }) {
   }
 
   const tabs = [
-    { id: 'appearance', label: 'Aparência',      icon: Palette },
-    { id: 'security',   label: 'Segurança',      icon: Lock },
-    { id: 'ai',         label: 'IA',             icon: RefreshCw },
-    { id: 'database',   label: 'Banco & Export', icon: Database },
-    { id: 'memoria',    label: 'Memória',        icon: Brain },
+    { id: 'appearance', label: 'Aparência', icon: Palette },
+    { id: 'security',   label: 'Segurança', icon: Lock },
+    { id: 'ai',         label: 'IA',        icon: RefreshCw },
+    { id: 'database',   label: 'Banco',     icon: Database },
+    { id: 'memoria',    label: 'Memória',   icon: Brain },
+    { id: 'shortcuts',  label: 'Atalhos',   icon: Keyboard },
   ]
 
   return (
@@ -183,7 +184,7 @@ export default function SettingsModal({ onClose }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="rounded-xl shadow-2xl w-full max-w-lg fade-in flex flex-col"
+        className="rounded-xl shadow-2xl w-full max-w-xl fade-in flex flex-col"
         style={{ background: '#1e1e2e', border: '1px solid #313244', maxHeight: '80vh' }}
       >
         {/* Header */}
@@ -192,20 +193,20 @@ export default function SettingsModal({ onClose }) {
             <Palette size={15} className="text-ui-accent" />
             <span className="text-ui-text font-semibold text-sm">Configurações</span>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-text transition-colors">
+<button onClick={onClose} className="p-1 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-text transition-colors">
             <X size={14} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex px-4 pt-2 gap-1 flex-shrink-0" style={{ borderBottom: '1px solid #313244' }}>
+        <div className="flex px-4 pt-2 gap-1 flex-shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid #313244', scrollbarWidth: 'none' }}>
           {tabs.map(t => {
             const Icon = t.icon
             return (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs rounded-t transition-colors ${
+                className={`flex items-center gap-1 px-2 py-2 text-xs rounded-t transition-colors flex-shrink-0 ${
                   tab === t.id ? 'text-ui-accent border-b-2' : 'text-ui-muted hover:text-ui-text'
                 }`}
                 style={tab === t.id ? { borderBottomColor: primary } : {}}
@@ -514,6 +515,50 @@ export default function SettingsModal({ onClose }) {
             )}
           </>}
 
+          {/* ── Atalhos ── */}
+          {tab === 'shortcuts' && (
+            <div className="space-y-4">
+              <p className="text-[10px] text-ui-muted">Atalhos de teclado disponíveis no sistema.</p>
+              {[
+                { group: 'Notas', items: [
+                  { keys: ['Ctrl', 'N'], desc: 'Criar nova nota (com modal de nome e pasta)' },
+                  { keys: ['Ctrl', 'K'], desc: 'Abrir busca global' },
+                ]},
+                { group: 'Editor', items: [
+                  { keys: ['Ctrl', 'B'], desc: 'Negrito' },
+                  { keys: ['Ctrl', 'I'], desc: 'Itálico' },
+                  { keys: ['Ctrl', 'S'], desc: 'Salvar nota manualmente' },
+                ]},
+                { group: 'Navegação', items: [
+                  { keys: ['↑', '↓'], desc: 'Navegar sugestões de wikilink' },
+                  { keys: ['Enter'], desc: 'Confirmar sugestão de wikilink' },
+                  { keys: ['Esc'], desc: 'Fechar modal / cancelar sugestão' },
+                ]},
+              ].map(({ group, items }) => (
+                <div key={group}>
+                  <div className="text-[10px] text-ui-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Keyboard size={10} />{group}
+                  </div>
+                  <div className="space-y-1.5">
+                    {items.map(({ keys, desc }) => (
+                      <div key={desc} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#252535', border: '1px solid #313244' }}>
+                        <span className="text-xs text-ui-text">{desc}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-3">
+                          {keys.map((k, i) => (
+                            <React.Fragment key={k}>
+                              {i > 0 && <span className="text-ui-muted text-[10px]">+</span>}
+                              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold" style={{ background: '#1e1e2e', border: '1px solid #45475a', color: primary }}>{k}</kbd>
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* ── Memória ── */}
           {tab === 'memoria' && <>
             <div className="space-y-4">
@@ -560,7 +605,7 @@ export default function SettingsModal({ onClose }) {
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-xs text-ui-muted hover:text-ui-text transition-colors" style={{ background: '#252535' }}>
             Cancelar
           </button>
-          {tab !== 'database' && tab !== 'memoria' && (
+          {tab !== 'database' && tab !== 'memoria' && tab !== 'shortcuts' && (
             <button onClick={handleSave} disabled={saving}
               className="px-4 py-2 rounded-lg text-xs font-semibold transition-all"
               style={{ background: primary, color: '#1e1e2e', opacity: saving ? 0.7 : 1 }}>

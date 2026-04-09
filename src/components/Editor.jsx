@@ -4,7 +4,7 @@ import {
   Bold, Italic, Strikethrough, Code, Link2, Hash,
   Heading1, Heading2, List, ListOrdered, Quote, Minus,
   CheckSquare, Table, Sparkles, Upload, StopCircle, Workflow, Type,
-  MousePointer2, Square, ArrowUpRight,
+  MousePointer2, Square, ArrowUpRight, X,
 } from 'lucide-react'
 import { useNotesStore } from '../store/useNotesStore'
 import MarkdownPreview from './MarkdownPreview'
@@ -101,7 +101,7 @@ function getWikiQuery(value, cursor) {
 }
 
 export default function Editor({ onImport }) {
-  const { getActiveNote, updateNote, notes } = useNotesStore()
+  const { getActiveNote, updateNote, notes, openTabs, closeTab, setActiveNote, activeNoteId } = useNotesStore()
   const activeNote = getActiveNote()
 
   const [mode, setMode] = useState('split')
@@ -432,12 +432,64 @@ export default function Editor({ onImport }) {
     }
   }
 
-  if (!activeNote) {
+  // ── Resizable panel widths ────────────────────────────────────────────────
+  const [splitLeft,  setSplitLeft]  = useState(50)
+  const [triLeft,    setTriLeft]    = useState(33)
+  const [triMid,     setTriMid]     = useState(33)
+  const panelDrag = useRef(null)
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!panelDrag.current) return
+      const dx = e.clientX - panelDrag.current.startX
+      const containerW = document.getElementById('editor-content-area')?.offsetWidth || window.innerWidth
+      const deltaPct = (dx / containerW) * 100
+      if (panelDrag.current.type === 'split') {
+        setSplitLeft(Math.max(15, Math.min(85, panelDrag.current.startVal + deltaPct)))
+      } else if (panelDrag.current.type === 'tri-left') {
+        const newLeft = Math.max(10, Math.min(80, panelDrag.current.startVal + deltaPct))
+        const diff    = newLeft - panelDrag.current.startVal
+        setTriLeft(newLeft)
+        setTriMid(Math.max(10, Math.min(80, panelDrag.current.startVal2 - diff)))
+      } else if (panelDrag.current.type === 'tri-mid') {
+        setTriMid(Math.max(10, Math.min(80, panelDrag.current.startVal + deltaPct)))
+      }
+    }
+    const onUp = () => {
+      if (panelDrag.current) {
+        panelDrag.current = null
+        document.body.style.cursor    = ''
+        document.body.style.userSelect = ''
+      }
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup',   onUp)
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+  }, [])
+
+  // Home screen when no tabs are open
+  if (!activeNote || openTabs.length === 0) {
+    const homeNote = notes.find(n => n.title === '🚀 Últimas Novidades')
     return (
-      <div className="flex-1 flex items-center justify-center" style={{ background: 'rgba(14,14,26,0.3)' }}>
-        <div className="text-center text-ui-muted">
-          <div className="text-5xl mb-4 opacity-30">⬡</div>
-          <div className="text-sm">Selecione ou crie uma nota</div>
+      <div className="flex flex-col h-full" style={{ background: 'rgba(14,14,26,0.4)' }}>
+        {/* Tab bar — empty state */}
+        <div className="flex items-center flex-shrink-0 overflow-x-auto" style={{ background: 'rgba(18,18,30,0.8)', borderBottom: '1px solid #313244', minHeight: 36 }}>
+          <div className="px-4 text-[10px] text-ui-muted italic">Nenhuma aba aberta</div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-ui-muted">
+            <div className="text-5xl mb-4 opacity-30">⬡</div>
+            <div className="text-sm mb-2">Selecione uma nota para abrir</div>
+            {homeNote && (
+              <button
+                onClick={() => setActiveNote(homeNote.id)}
+                className="mt-2 px-4 py-2 rounded-lg text-xs font-medium transition-all hover:opacity-80"
+                style={{ background: 'var(--color-primary)', color: '#1e1e2e' }}
+              >
+                🚀 Ver Últimas Novidades
+              </button>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -447,11 +499,68 @@ export default function Editor({ onImport }) {
   const showPreview = mode === 'preview' || mode === 'split' || mode === 'graph' || mode === 'chat'
   const showGraph   = mode === 'graph' || mode === 'graph-full'
   const showChat    = mode === 'chat'
-  const editorWidth  = mode === 'edit' ? 'w-full' : (mode === 'graph' || mode === 'chat') ? 'w-1/3' : 'w-1/2'
-  const previewWidth = mode === 'preview' ? 'w-full' : (mode === 'graph' || mode === 'chat') ? 'w-1/3' : 'w-1/2'
+
+  const startPanelDrag = (type, e) => {
+    e.preventDefault()
+    panelDrag.current = { type, startX: e.clientX, startVal: type === 'split' ? splitLeft : type === 'tri-left' ? triLeft : triMid, startVal2: triMid }
+    document.body.style.cursor    = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
+  const ResizeHandle = ({ onDragStart }) => (
+    <div
+      onMouseDown={onDragStart}
+      style={{
+        width: 4, flexShrink: 0, cursor: 'col-resize',
+        background: '#313244', transition: 'background 0.15s', zIndex: 10,
+      }}
+      onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
+      onMouseOut={(e)  => (e.currentTarget.style.background = '#313244')}
+    />
+  )
+
+  const editorPct  = mode === 'edit' ? 100 : mode === 'preview' ? 0 : (mode === 'graph' || mode === 'chat') ? triLeft : splitLeft
+  const previewPct = mode === 'preview' ? 100 : mode === 'edit' ? 0 : (mode === 'graph' || mode === 'chat') ? triMid : (100 - splitLeft)
+  const thirdPct   = 100 - triLeft - triMid
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'rgba(14,14,26,0.4)' }}>
+      {/* ── Tab bar ── */}
+      <div
+        className="flex items-end flex-shrink-0 overflow-x-auto"
+        style={{ background: 'rgba(14,14,26,0.9)', borderBottom: '1px solid #313244', minHeight: 34 }}
+      >
+        {openTabs.map((tabId) => {
+          const tabNote = notes.find(n => n.id === tabId)
+          if (!tabNote) return null
+          const isActive = tabId === activeNoteId
+          return (
+            <div
+              key={tabId}
+              onClick={() => setActiveNote(tabId)}
+              className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer flex-shrink-0 group transition-colors"
+              style={{
+                maxWidth: 180,
+                background: isActive ? 'rgba(37,37,53,0.9)' : 'transparent',
+                borderRight: '1px solid #313244',
+                borderTop: isActive ? '1px solid var(--color-primary)' : '1px solid transparent',
+                color: isActive ? 'var(--color-primary)' : '#6c7086',
+              }}
+            >
+              <span className="text-[11px] truncate flex-1" style={{ maxWidth: 120 }}>{tabNote.title}</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); closeTab(tabId) }}
+                className="flex-shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400"
+                style={{ color: 'inherit' }}
+                title="Fechar aba"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+
       {/* ── Top bar ── */}
       <div
         className="flex items-center justify-between px-4 py-2 flex-shrink-0"
@@ -642,12 +751,12 @@ export default function Editor({ onImport }) {
           </div>
         </div>
       ) : (
-      <div className="flex flex-1 overflow-hidden relative">
+      <div id="editor-content-area" className="flex flex-1 overflow-hidden relative">
         {/* Editor */}
         {showEditor && (
           <div
-            className={`flex flex-col overflow-hidden relative ${editorWidth}`}
-            style={(showPreview || showGraph) ? { borderRight: '1px solid #313244' } : {}}
+            className="flex flex-col overflow-hidden relative"
+            style={{ width: `${editorPct}%`, flexShrink: 0 }}
           >
             <textarea
               ref={textareaRef}
@@ -706,36 +815,64 @@ export default function Editor({ onImport }) {
           </div>
         )}
 
+        {/* Handle entre editor e preview */}
+        {showEditor && showPreview && (
+          <ResizeHandle onDragStart={(e) => startPanelDrag(
+            (mode === 'graph' || mode === 'chat') ? 'tri-left' : 'split', e
+          )} />
+        )}
+
         {/* Preview */}
         {showPreview && (
           <div
-            className={`overflow-hidden ${previewWidth}`}
-            style={showGraph ? { borderRight: '1px solid #313244' } : {}}
+            className="overflow-hidden"
+            style={{ width: `${previewPct}%`, flexShrink: 0 }}
           >
-            <MarkdownPreview 
-              content={previewContent} 
+            <MarkdownPreview
+              content={previewContent}
               activeTool={activeDiagramTool}
               onDiagramUpdate={handleDiagramUpdate}
             />
           </div>
         )}
 
+        {/* Handle entre preview e terceiro painel */}
+        {showPreview && (showGraph || showChat) && (
+          <ResizeHandle onDragStart={(e) => startPanelDrag('tri-mid', e)} />
+        )}
+
         {/* Grafo */}
         {showGraph && (
-          <div className={`${mode === 'graph-full' ? 'w-full' : 'w-1/3'} h-full overflow-hidden`}>
+          <div className="h-full overflow-hidden" style={{ width: mode === 'graph-full' ? '100%' : `${thirdPct}%`, flexShrink: 0 }}>
             <InlineGraph />
           </div>
         )}
 
         {/* Chat */}
         {showChat && (
-          <div className="w-1/3 h-full overflow-hidden border-l border-[#313244]">
+          <div className="h-full overflow-hidden border-l border-[#313244]" style={{ width: `${thirdPct}%`, flexShrink: 0 }}>
             <ChatPanel />
           </div>
         )}
 
       </div>
       )}
+
+      {/* ── Status bar ── */}
+      {(() => {
+        const wordCount = previewContent.trim()
+          ? previewContent.replace(/```[\s\S]*?```/g, '').replace(/[#*`_~[\]]/g, '').trim().split(/\s+/).filter(Boolean).length
+          : 0
+        const charCount = previewContent.length
+        return (
+          <div className="flex items-center gap-3 px-4 py-1 flex-shrink-0 select-none"
+            style={{ borderTop: '1px solid #1e1e2e', background: 'rgba(14,14,26,0.7)' }}>
+            <span className="text-[10px] text-ui-muted">{wordCount} {wordCount === 1 ? 'palavra' : 'palavras'}</span>
+            <span className="text-[10px]" style={{ color: '#313244' }}>·</span>
+            <span className="text-[10px] text-ui-muted">{charCount} {charCount === 1 ? 'caractere' : 'caracteres'}</span>
+          </div>
+        )
+      })()}
 
       <BacklinksPanel noteId={activeNote.id} />
 

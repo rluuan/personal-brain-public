@@ -302,6 +302,22 @@ body {
   background: #2a2a3e;
 }
 
+/* Select/option dark background fix */
+select option {
+  background: #1e1e2e;
+  color: #cdd6f4;
+}
+
+/* Sidebar background: semi-transparent on desktop, opaque on mobile */
+.sidebar-root {
+  background: rgba(18, 18, 30, 0.4);
+}
+@media (max-width: 767px) {
+  .sidebar-root {
+    background: #12121e;
+  }
+}
+
 /* Mobile bottom navigation */
 .mobile-bottom-nav {
   display: none;
@@ -363,6 +379,8 @@ body {
     width: 280px;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
+    background: #12121e;
+    padding-bottom: calc(56px + env(safe-area-inset-bottom));
   }
   .mobile-sidebar-drawer.open {
     transform: translateX(0);

@@ -13,6 +13,7 @@ import {
 const COOKIE_NAME = 'personal-brain-user'
 const COOKIE_DAYS = 365
 const ACTIVE_NOTE_KEY = 'personal-brain-active-note'
+const OPEN_TABS_KEY   = 'personal-brain-open-tabs'
 
 function getCookie(name) {
   const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'))
@@ -32,6 +33,7 @@ export const useNotesStore = create((set, get) => ({
   notes: [],          // always plaintext in memory
   folders: [],
   activeNoteId: null,
+  openTabs: [],       // ordered array of note IDs currently open as tabs
   loading: true,
   user: null,         // { id, nickname }
   encryptionKey: null, // raw passphrase — never leaves the browser
@@ -85,6 +87,11 @@ export const useNotesStore = create((set, get) => ({
       ? savedActiveId
       : (notes[0]?.id || null)
 
+    // Restore open tabs
+    const savedTabs = JSON.parse(localStorage.getItem(OPEN_TABS_KEY) || '[]')
+    const validTabs = savedTabs.filter(id => notes.find(n => n.id === id))
+    const openTabs = validTabs.length > 0 ? validTabs : (restoredActiveId ? [restoredActiveId] : [])
+
     set({
       user,
       notes,
@@ -93,6 +100,7 @@ export const useNotesStore = create((set, get) => ({
       encryptionKey,
       loading: false,
       activeNoteId: restoredActiveId,
+      openTabs,
     })
 
     // Apply saved font family
@@ -141,13 +149,14 @@ export const useNotesStore = create((set, get) => ({
   logout: () => {
     const { user } = get()
     deleteCookie(COOKIE_NAME)
-    // Remove encryption key from localStorage on logout so next login prompts for it
     if (user) localStorage.removeItem(localStorageKey(user.id))
+    localStorage.removeItem(OPEN_TABS_KEY)
     set({
       user: null,
       notes: [],
       folders: [],
       activeNoteId: null,
+      openTabs: [],
       encryptionKey: null,
       settings: { primaryColor: '#cba6f7', secondaryColor: '#89b4fa', extra: { projectName: 'Personal Brain', aiModel: 'gemma3:12b', embedModel: 'nomic-embed-text' } },
     })
@@ -167,7 +176,25 @@ export const useNotesStore = create((set, get) => ({
   // ── Notes ─────────────────────────────────────────────────────────────
   setActiveNote: (id) => {
     localStorage.setItem(ACTIVE_NOTE_KEY, id)
-    set({ activeNoteId: id })
+    set((state) => {
+      const openTabs = state.openTabs.includes(id) ? state.openTabs : [...state.openTabs, id]
+      localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(openTabs))
+      return { activeNoteId: id, openTabs }
+    })
+  },
+
+  closeTab: (id) => {
+    set((state) => {
+      const newTabs = state.openTabs.filter(t => t !== id)
+      let newActive = state.activeNoteId
+      if (state.activeNoteId === id) {
+        const idx = state.openTabs.indexOf(id)
+        newActive = newTabs[idx] ?? newTabs[idx - 1] ?? null
+      }
+      localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(newTabs))
+      if (newActive) localStorage.setItem(ACTIVE_NOTE_KEY, newActive)
+      return { openTabs: newTabs, activeNoteId: newActive }
+    })
   },
 
   getActiveNote: () => {
@@ -196,7 +223,12 @@ export const useNotesStore = create((set, get) => ({
 
     // In-memory note always stores plaintext
     const memNote = { ...dbNote, title, content: plainContent }
-    set((state) => ({ notes: [memNote, ...state.notes], activeNoteId: id }))
+    set((state) => {
+      const openTabs = [...state.openTabs, id]
+      localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(openTabs))
+      localStorage.setItem(ACTIVE_NOTE_KEY, id)
+      return { notes: [memNote, ...state.notes], activeNoteId: id, openTabs }
+    })
     return id
   },
 
@@ -225,10 +257,15 @@ export const useNotesStore = create((set, get) => ({
     await dbDeleteNote(id)
     set((state) => {
       const remaining = state.notes.filter((n) => n.id !== id)
-      return {
-        notes: remaining,
-        activeNoteId: state.activeNoteId === id ? remaining[0]?.id || null : state.activeNoteId,
+      const newTabs = state.openTabs.filter(t => t !== id)
+      let newActive = state.activeNoteId
+      if (state.activeNoteId === id) {
+        const idx = state.openTabs.indexOf(id)
+        newActive = newTabs[idx] ?? newTabs[idx - 1] ?? null
       }
+      localStorage.setItem(OPEN_TABS_KEY, JSON.stringify(newTabs))
+      if (newActive) localStorage.setItem(ACTIVE_NOTE_KEY, newActive)
+      return { notes: remaining, openTabs: newTabs, activeNoteId: newActive }
     })
   },
 
@@ -273,6 +310,44 @@ export const useNotesStore = create((set, get) => ({
       folders: state.folders.filter((f) => f.id !== id && f.parent_id !== id),
       notes: state.notes.map((n) => (n.folder_id === id ? { ...n, folder_id: null } : n)),
     }))
+  },
+
+  // ── Daily Note ────────────────────────────────────────────────────────
+  openDailyNote: async () => {
+    const now   = new Date()
+    const year  = now.getFullYear().toString()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day   = String(now.getDate()).padStart(2, '0')
+    const noteTitle = `${year}-${month}-${day}`
+
+    // Year folder (root)
+    let yearFolder = get().folders.find(f => f.name === year && !f.parent_id)
+    if (!yearFolder) {
+      const yid = await get().createFolder(year, null)
+      yearFolder = get().folders.find(f => f.id === yid)
+    }
+
+    // Month folder
+    let monthFolder = get().folders.find(f => f.name === month && f.parent_id === yearFolder.id)
+    if (!monthFolder) {
+      const mid = await get().createFolder(month, yearFolder.id)
+      monthFolder = get().folders.find(f => f.id === mid)
+    }
+
+    // Day folder
+    let dayFolder = get().folders.find(f => f.name === day && f.parent_id === monthFolder.id)
+    if (!dayFolder) {
+      const did = await get().createFolder(day, monthFolder.id)
+      dayFolder = get().folders.find(f => f.id === did)
+    }
+
+    // Note
+    const existing = get().notes.find(n => n.title === noteTitle && n.folder_id === dayFolder.id)
+    if (existing) {
+      get().setActiveNote(existing.id)
+    } else {
+      await get().createNote(noteTitle, dayFolder.id, `# ${noteTitle}\n\n`)
+    }
   },
 
   // ── Helpers ───────────────────────────────────────────────────────────

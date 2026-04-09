@@ -35,16 +35,24 @@ Este projeto foi inspirado na visão de **Andrej Karpathy** sobre o uso de LLMs 
 
 ## Funcionalidades Principais
 
-- 📝 **Editor Markdown** com Auto-Save instantâneo (Debounce).
+- 📝 **Editor Markdown** com Auto-Save instantâneo (Debounce) e quebra de linha real (Enter = nova linha no preview).
 - 🔗 **Wiki-links bidirecionais** automáticos através de `[[Notas]]`.
 - 🕸️ **Painel de Grafo (Inline e Full)** dinâmico, renderizado em canvas, permitindo arrastar os nós (Particle Force Directed Graph).
 - 🪄 **Automação IA e Formatação:** O sistema formata trechos de textos inteiros sem alterar a semântica usando LLM.
 - 💬 **Sincronização RAG e Chat AI:** 
-  - Geração de modelo vetorial (*Embeendings*) local para chunking das anotações em base de dados vetorial usando Postgres.
+  - Geração de modelo vetorial (*Embeddings*) local para chunking das anotações em base de dados vetorial usando Postgres.
   - O Chat consegue recuperar partes idênticas das anotações gerando um raciocínio contextual para a IA através de RAG (Busca e Geração).
   - Capacidades completas offline.
 - ✨ **Interface de Vidro** moderna através de background dinâmico transparente com controle de densidade e repulsão interativa, criando um UX luxuoso com tema escuro (Catppuccin Macchiato custom).
-- 🗂️ **Gerenciador de Subpastas** completo, barra de busca poderosa e interface em múltiplos layout flexíveis (Edit/Split).
+- 🗂️ **Gerenciador de Subpastas** completo com drag & drop para reordenação, barra de busca poderosa e interface em múltiplos layouts flexíveis (Edit/Split/Preview/Graph/Chat).
+- 🗓️ **Nota Diária** — botão que cria/abre automaticamente a nota do dia com estrutura de pastas `ano > mês > dia`.
+- 🗂️ **Sistema de Abas** — notas abertas em abas, fecháveis individualmente, com persistência entre sessões.
+- 📊 **Contador de palavras e caracteres** em tempo real no rodapé do editor.
+- 📈 **Métricas de uso** — gráficos de atividade semanal e notas criadas por mês.
+- 📱 **Totalmente responsivo** — navegação mobile com barra inferior e drawer lateral.
+- 🌐 **Importar URL** — cole uma URL e importe o conteúdo da página como nota.
+- 🔒 **Criptografia E2E** — notas criptografadas no navegador com AES-256/PBKDF2. A chave nunca sai do dispositivo.
+- 🖼️ **PWA** — instalável como app com ícone personalizado.
 
 ## Tecnologias
 

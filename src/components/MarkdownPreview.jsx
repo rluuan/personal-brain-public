@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import { useNotesStore } from '../store/useNotesStore'
 import InlineGraph from './InlineGraph'
 import DiagramView from './DiagramView'
@@ -13,6 +14,8 @@ function processContent(content, notes) {
       return `[${title}](wikilink:${encodeURIComponent(title)}${exists ? '' : '?broken'})`
     })
     .replace(/#(\w+)/g, (_, tag) => `[\`#${tag}\`](tag:${tag})`)
+    // Force hard line breaks: add two trailing spaces before newlines that follow a markdown link
+    .replace(/(\]\([^)]+\)) *\n/g, '$1  \n')
 }
 
 export default function MarkdownPreview({ content, activeTool = 'select', onDiagramUpdate }) {
@@ -33,7 +36,7 @@ export default function MarkdownPreview({ content, activeTool = 'select', onDiag
   return (
     <div className="markdown-preview">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           a: ({ href, children }) => {
             if (href?.startsWith('wikilink:')) {

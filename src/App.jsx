@@ -14,6 +14,84 @@ import SettingsModal from './components/SettingsModal'
 import { useNotesStore } from './store/useNotesStore'
 import { isEncrypted } from './crypto'
 
+// ── New Note Modal ────────────────────────────────────────────────────────────
+function NewNoteModal({ onClose, onCreate }) {
+  const { folders } = useNotesStore()
+  const [title, setTitle]     = useState('Sem Título')
+  const [folderId, setFolderId] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    inputRef.current?.select()
+  }, [])
+
+  const handleCreate = async () => {
+    const t = title.trim() || 'Sem Título'
+    await onCreate(t, folderId || null)
+    onClose()
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.6)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div
+        className="rounded-xl shadow-2xl p-6 w-full max-w-sm fade-in"
+        style={{ background: '#1e1e2e', border: '1px solid #313244' }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-ui-text font-semibold text-sm">Nova Nota</h2>
+          <button onClick={onClose} className="p-1 rounded hover:bg-ui-hover text-ui-muted">
+            <X size={13} />
+          </button>
+        </div>
+
+        <label className="block text-xs text-ui-muted mb-1">Nome da nota</label>
+        <input
+          ref={inputRef}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') onClose() }}
+          className="w-full px-3 py-2 rounded-lg text-xs outline-none mb-4"
+          style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }}
+        />
+
+        <label className="block text-xs text-ui-muted mb-1">Pasta (opcional)</label>
+        <select
+          value={folderId}
+          onChange={(e) => setFolderId(e.target.value)}
+          className="w-full mb-5 px-3 py-2 rounded-lg text-sm"
+          style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }}
+        >
+          <option value="">— Raiz (sem pasta) —</option>
+          {folders.map(f => (
+            <option key={f.id} value={f.id}>{f.name}</option>
+          ))}
+        </select>
+
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-xs text-ui-muted hover:text-ui-text transition-colors"
+            style={{ background: '#252535' }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+            style={{ background: 'var(--color-primary)', color: '#1e1e2e' }}
+          >
+            Criar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Import Modal ──────────────────────────────────────────────────────────────
 function ImportModal({ defaultFolderId, onClose }) {
   const { folders, createNote } = useNotesStore()
@@ -126,6 +204,7 @@ export default function App() {
   const [showSync,     setShowSync]     = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showImport,   setShowImport]   = useState(false)
+  const [showNewNote,  setShowNewNote]  = useState(false)
   const [importFolderId, setImportFolderId] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -153,12 +232,16 @@ export default function App() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // Ctrl+K
+  // Ctrl+K / Ctrl+N
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault()
         setShowSearch(true)
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault()
+        setShowNewNote(true)
       }
     }
     window.addEventListener('keydown', handler)
@@ -340,6 +423,7 @@ export default function App() {
       )}
 
       {/* ── Modals ── */}
+      {showNewNote  && <NewNoteModal onClose={() => setShowNewNote(false)} onCreate={async (title, folderId) => { await createNote(title, folderId); if (isMobile) setMobileSidebarOpen(false) }} />}
       {showSearch   && <SearchModal  onClose={() => setShowSearch(false)} />}
       {showSync     && <SyncModal    onClose={() => setShowSync(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}

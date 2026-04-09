@@ -23,21 +23,43 @@ dist-ssr
 *.sln
 *.sw?
 
-# Data
+# Data & database
 data/
 exports/
 memory/
 backups/
 backups_csv/
+uploads/
 brain.db*
 db-config.json
 sqlite.db
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Config / secrets
 .env
 .env.*
 !.env.example
+config.json
+server-config.json
+*.pem
+*.key
+*.cert
+*.p12
+
+# User files
+*.csv
+*.json.bak
+notes-export*
+export-*
+
+# OS
+.DS_Store
+Thumbs.db
 
 # vite
 .vite/

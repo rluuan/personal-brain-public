@@ -3,11 +3,73 @@ import {
   FilePlus, Search, FolderPlus, ChevronDown, ChevronRight,
   Folder, FolderOpen, FileText, Trash2, Edit2,
   Hash, LogOut, User, RefreshCw, Settings, Upload,
-  Globe, Download, Loader2, X, Link, EyeOff, Github,
+  Globe, Download, Loader2, X, Link, EyeOff, Github, Clock, Sparkles, TrendingUp, CalendarDays,
 } from 'lucide-react'
+import MetricsModal from './MetricsModal'
 import { useNotesStore } from '../store/useNotesStore'
 
 const API = () => `http://${window.location.hostname}:3001/api`
+
+const NOVIDADES_TITLE = '🚀 Últimas Novidades'
+const NOVIDADES_CONTENT = `# 🚀 Últimas Novidades
+
+> Acompanhe aqui as últimas melhorias e funcionalidades adicionadas ao sistema.
+
+---
+
+## v1.5 — Abril 2025
+
+### ✨ Novas Funcionalidades
+- **Ctrl+N** — Abre modal para criar nota com nome e pasta escolhidos
+- **Painéis redimensionáveis** — Arraste o divisor entre editor/preview/grafo para ajustar larguras
+- **Drag & Drop de pastas** — Clique e arraste pastas para reordenar na sidebar
+- **Painel Últimas Atualizações** — Mostra as 7 notas editadas recentemente com tempo relativo
+- **Aba Atalhos** — Nova aba no modal de Configurações com todos os atalhos do sistema
+
+### 🛠️ Melhorias
+- **Sidebar mobile** — Fundo sólido na barra lateral do celular (não fica mais transparente)
+- **Quebra de linha em wikilinks** — \`[[nota]]\` em linhas separadas agora renderiza corretamente no preview
+- **Combobox de fonte** — Fundo escuro correto nas opções do seletor de fonte
+
+---
+
+## v1.4 — Março 2025
+
+### ✨ Novas Funcionalidades
+- **Modo Diagrama** — Editor visual com retângulos e setas dentro das notas
+- **Importar URL** — Cole uma URL e importe o conteúdo da página como nota
+- **Criptografia E2E** — Todas as notas são criptografadas no lado do cliente
+- **Modo Grafo Full** — Visualização do grafo de conexões em tela cheia
+- **Backup do banco** — Exportação em JSON ou CSV pelo painel de configurações
+
+### 🛠️ Melhorias
+- Suporte a múltiplos usuários com chaves de criptografia independentes
+- Autocompletar wikilinks com \`[[\` ao digitar
+- Formatação IA com suporte a seleção parcial do texto
+
+---
+
+## v1.3 — Fevereiro 2025
+
+### ✨ Novas Funcionalidades
+- **Chat com RAG** — Converse com suas notas usando IA local (Ollama)
+- **Sync de embeddings** — Indexe suas notas para busca semântica
+- **Backlinks** — Veja quais notas apontam para a nota atual
+- **Ocultar nota** — Esconda o conteúdo de notas sensíveis
+- **Fonte por nota** — Escolha a fonte individualmente para cada nota
+
+---
+
+## v1.0 — Janeiro 2025 · Lançamento
+
+- Editor Markdown com preview em tempo real
+- Sistema de pastas hierárquicas
+- Busca global (\`Ctrl+K\`)
+- Modo split, preview, grafo e chat
+- Temas personalizáveis (cores primária e secundária)
+- Importação de arquivos \`.md\` e \`.txt\`
+- Partículas animadas no background 🎉
+`
 
 // ── Balloon overlay (shared with Editor) ─────────────────────────────────────
 
@@ -258,12 +320,86 @@ function ScraperPanel({ folders, onCreate }) {
 
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
 
+const FOLDER_ORDER_KEY = 'personal-brain-folder-order'
+
+function loadFolderOrder() {
+  try { return JSON.parse(localStorage.getItem(FOLDER_ORDER_KEY) || '[]') } catch { return [] }
+}
+function saveFolderOrder(ids) {
+  localStorage.setItem(FOLDER_ORDER_KEY, JSON.stringify(ids))
+}
+function sortByOrder(folders, order) {
+  if (!order.length) return folders
+  return [...folders].sort((a, b) => {
+    const ia = order.indexOf(a.id)
+    const ib = order.indexOf(b.id)
+    if (ia === -1 && ib === -1) return 0
+    if (ia === -1) return 1
+    if (ib === -1) return -1
+    return ia - ib
+  })
+}
+
 export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
   const store = useNotesStore()
-  const { notes, folders, activeNoteId, createNote, createFolder, getAllTags, user, logout } = store
+  const { notes, folders, activeNoteId, createNote, createFolder, getAllTags, user, logout, openDailyNote } = store
   const [tagsOpen, setTagsOpen] = useState(false)
+  const [recentOpen, setRecentOpen] = useState(true)
+  const [folderOrder, setFolderOrder] = useState(loadFolderOrder)
+  const [showMetrics, setShowMetrics] = useState(false)
+  const [dragOverId, setDragOverId] = useState(null)
+  const draggingId = useRef(null)
 
-  const rootFolders   = folders.filter((f) => !f.parent_id)
+  const recentNotes = [...notes]
+    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+    .slice(0, 7)
+
+  const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr)
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'agora'
+    if (mins < 60) return `${mins}m atrás`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h atrás`
+    return `${Math.floor(hrs / 24)}d atrás`
+  }
+
+  const handleFolderDragStart = (e, folderId) => {
+    e.dataTransfer.setData('folderId', folderId)
+    e.dataTransfer.effectAllowed = 'move'
+    draggingId.current = folderId
+  }
+  const handleFolderDragOver = (e, folderId) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverId !== folderId) setDragOverId(folderId)
+  }
+  const handleFolderDragLeave = (e) => {
+    // Only clear if leaving to outside any drag target
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragOverId(null)
+  }
+  const handleFolderDragEnd = () => {
+    setDragOverId(null)
+    draggingId.current = null
+  }
+  const handleFolderDrop = (e, targetId) => {
+    e.preventDefault()
+    const draggedId = e.dataTransfer.getData('folderId')
+    setDragOverId(null)
+    draggingId.current = null
+    if (!draggedId || draggedId === targetId) return
+    const rootFolderIds = sortByOrder(folders.filter(f => !f.parent_id), folderOrder).map(f => f.id)
+    const from = rootFolderIds.indexOf(draggedId)
+    const to   = rootFolderIds.indexOf(targetId)
+    if (from === -1 || to === -1) return
+    const newOrder = [...rootFolderIds]
+    newOrder.splice(from, 1)
+    newOrder.splice(to, 0, draggedId)
+    saveFolderOrder(newOrder)
+    setFolderOrder(newOrder)
+  }
+
+  const rootFolders   = sortByOrder(folders.filter((f) => !f.parent_id), folderOrder)
   const uncategorized = notes.filter((n) => !n.folder_id)
   const allTags       = getAllTags()
 
@@ -271,8 +407,17 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
     await store.createNote(title, folderId, content)
   }
 
+  const openNovidades = async () => {
+    const existing = notes.find(n => n.title === NOVIDADES_TITLE)
+    if (existing) {
+      store.setActiveNote(existing.id)
+    } else {
+      await store.createNote(NOVIDADES_TITLE, null, NOVIDADES_CONTENT)
+    }
+  }
+
   return (
-    <div className="flex flex-col h-full" style={{ background: 'rgba(18,18,30,0.4)', borderRight: '1px solid #313244' }}>
+    <div className="flex flex-col h-full sidebar-root" style={{ borderRight: '1px solid #313244' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2.5 flex-shrink-0 relative" style={{ borderBottom: '1px solid #313244' }}>
         <div className="flex items-center gap-1.5 z-10 relative">
@@ -287,6 +432,7 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
           </button>
         </div>
         <div className="flex gap-0.5 z-10 relative">
+          <button onClick={openDailyNote} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-accent transition-colors" title="Nota do dia de hoje"><CalendarDays size={13} /></button>
           <button onClick={onSearch} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-text transition-colors" title="Buscar (Ctrl+K)"><Search size={13} /></button>
           <button onClick={() => createFolder('Nova Pasta')} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-yellow transition-colors" title="Nova pasta"><FolderPlus size={13} /></button>
           <button onClick={() => onImport(null)} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-blue transition-colors" title="Importar (.md, .txt)"><Upload size={13} /></button>
@@ -296,11 +442,32 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
 
       {/* Tree */}
       <div className="flex-1 overflow-y-auto py-1.5 px-1">
-        {rootFolders.map((folder) => (
-          <FolderItem key={folder.id} folder={folder} notes={notes}
-            subfolders={folders.filter((f) => f.parent_id === folder.id)}
-            allFolders={folders} activeNoteId={activeNoteId} depth={0} store={store} onImport={onImport} />
-        ))}
+        {rootFolders.map((folder) => {
+          const isOver    = dragOverId === folder.id
+          const isDragging = draggingId.current === folder.id
+          return (
+            <div
+              key={folder.id}
+              draggable
+              onDragStart={(e)  => handleFolderDragStart(e, folder.id)}
+              onDragOver={(e)   => handleFolderDragOver(e, folder.id)}
+              onDragLeave={handleFolderDragLeave}
+              onDragEnd={handleFolderDragEnd}
+              onDrop={(e)       => handleFolderDrop(e, folder.id)}
+              style={{
+                opacity: isDragging ? 0.4 : 1,
+                transition: 'opacity 0.15s, border-color 0.1s',
+                borderRadius: 6,
+                border: isOver ? '1px dashed var(--color-primary)' : '1px solid transparent',
+                background: isOver ? 'rgba(203,166,247,0.07)' : 'transparent',
+              }}
+            >
+              <FolderItem folder={folder} notes={notes}
+                subfolders={folders.filter((f) => f.parent_id === folder.id)}
+                allFolders={folders} activeNoteId={activeNoteId} depth={0} store={store} onImport={onImport} />
+            </div>
+          )
+        })}
 
         {uncategorized.length > 0 && (
           <div className={rootFolders.length > 0 ? 'mt-1 pt-1' : ''} style={rootFolders.length > 0 ? { borderTop: '1px solid #313244' } : {}}>
@@ -326,7 +493,50 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
           </div>
         )}
 
+        {/* Últimas Atualizações */}
+        {recentNotes.length > 0 && (
+          <div className="mt-0.5" style={{ borderTop: '1px solid #313244' }}>
+            <button onClick={() => setRecentOpen(o => !o)}
+              className="flex items-center gap-1.5 w-full px-2 py-2 text-ui-muted text-xs uppercase tracking-wider hover:text-ui-text transition-colors">
+              {recentOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+              <Clock size={11} />
+              <span>Últimas atualizações</span>
+            </button>
+            {recentOpen && (
+              <div className="pb-1">
+                {recentNotes.map(note => (
+                  <div
+                    key={note.id}
+                    onClick={() => store.setActiveNote(note.id)}
+                    className={`flex items-center justify-between gap-1.5 px-2 py-1.5 rounded cursor-pointer text-xs transition-all mx-1 ${note.id === activeNoteId ? 'text-ui-accent' : 'text-ui-text hover:bg-ui-hover/50'}`}
+                    style={note.id === activeNoteId ? { background: 'rgba(49,49,85,0.7)' } : {}}
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <FileText size={10} className="flex-shrink-0 text-ui-muted" />
+                      <span className="truncate">{note.title}</span>
+                    </div>
+                    <span className="text-[10px] text-ui-muted flex-shrink-0">{timeAgo(note.updated_at)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <ScraperPanel folders={folders} onCreate={handleScraperCreate} />
+      </div>
+
+      {/* Últimas Novidades */}
+      <div className="px-3 py-1.5 flex items-center justify-center" style={{ borderTop: '1px solid #313244' }}>
+        <button
+          onClick={openNovidades}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors hover:bg-ui-hover w-full justify-center"
+          style={{ color: 'var(--color-primary)', border: '1px solid rgba(203,166,247,0.2)' }}
+          title="Ver últimas novidades e atualizações"
+        >
+          <Sparkles size={10} />
+          Últimas Novidades
+        </button>
       </div>
 
       {/* Github Credits */}
@@ -345,15 +555,29 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
       {/* Footer */}
       <div className="px-3 py-2.5 flex items-center justify-between flex-shrink-0 gap-2"
         style={{ borderTop: '1px solid #313244', background: 'rgba(18,18,30,0.6)' }}>
+        {/* Usuário */}
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-primary)', color: '#1e1e2e' }}>
             <User size={14} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 hidden sm:block">
             <div className="text-xs font-semibold text-ui-text truncate">{user?.nickname}</div>
             <div className="text-[10px] text-ui-muted">{notes.length} nota{notes.length !== 1 ? 's' : ''}</div>
           </div>
         </div>
+
+        {/* Métricas — centro */}
+        <button
+          onClick={() => setShowMetrics(true)}
+          className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all hover:opacity-90 flex-shrink-0"
+          style={{ background: 'rgba(203,166,247,0.1)', border: '1px solid rgba(203,166,247,0.25)', color: 'var(--color-primary)' }}
+          title="Ver métricas de uso"
+        >
+          <TrendingUp size={10} />
+          Métricas
+        </button>
+
+        {/* Ações */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={onSettings} className="p-1.5 rounded hover:bg-ui-hover hover:text-ui-accent transition-colors text-ui-muted" title="Configurações">
             <Settings size={15} />
@@ -364,6 +588,8 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
           </button>
         </div>
       </div>
+
+      {showMetrics && <MetricsModal onClose={() => setShowMetrics(false)} />}
     </div>
   )
 }
