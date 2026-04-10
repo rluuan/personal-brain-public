@@ -1,6 +1,6 @@
 {
   "name": "personal-brain",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "private": true,
   "type": "module",
   "main": "electron/main.js",
@@ -50,10 +50,11 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "shortcutName": "Personal Brain",
-      "perMachine": false
+      "perMachine": false,
+      "artifactName": "Personal-Brain-Setup-${version}.exe"
     },
     "portable": {
-      "artifactName": "${productName} Portable ${version}.exe"
+      "artifactName": "Personal-Brain-Portable-${version}.exe"
     },
     "publish": {
       "provider": "github",
