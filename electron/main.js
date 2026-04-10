@@ -119,6 +119,14 @@ app.whenReady().then(async () => {
       autoUpdater.checkForUpdates().catch(err => {
         log.error('Erro ao executar checkForUpdates:', err)
       })
+
+      // Verificar atualizações a cada 10 minutos
+      setInterval(() => {
+        log.info('Verificação periódica de atualização (intervalo de 10 min)...')
+        autoUpdater.checkForUpdates().catch(err => {
+          log.error('Erro na verificação periódica:', err)
+        })
+      }, 10 * 60 * 1000)
     } catch (err) {
       log.error('FALHA CRÍTICA AO CARREGAR ELECTRON-UPDATER:', err)
     }
