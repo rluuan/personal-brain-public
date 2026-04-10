@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
+import log from 'electron-log'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
@@ -61,26 +62,50 @@ app.whenReady().then(async () => {
 
   if (app.isPackaged) {
     const { autoUpdater } = await import('electron-updater')
+    
+    // Configurar logs: o arquivo fica em %AppData%/personal-brain/logs/main.log
+    log.transports.file.level = 'info'
+    autoUpdater.logger = log
+    log.info('App iniciando (packaged). Verificando atualizações...')
+
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
 
+    autoUpdater.on('checking-for-update', () => {
+      log.info('Checking for update...')
+    })
+
     autoUpdater.on('update-available', (info) => {
+      log.info('Update available. Versão:', info.version)
       win.webContents.send('update-available', info)
     })
 
-    autoUpdater.on('download-progress', (info) => {
-      win.webContents.send('download-progress', info)
+    autoUpdater.on('update-not-available', (info) => {
+      log.info('Update not available.')
+    })
+
+    autoUpdater.on('error', (err) => {
+      log.error('Error in auto-updater:', err)
+    })
+
+    autoUpdater.on('download-progress', (progressObj) => {
+      log.info(`Download em progresso: ${progressObj.percent.toFixed(2)}%`)
+      win.webContents.send('download-progress', progressObj)
     })
 
     autoUpdater.on('update-downloaded', (info) => {
+      log.info('Update baixado; será instalado ao fechar o app')
       win.webContents.send('update-downloaded', info)
     })
 
     ipcMain.on('install-update', () => {
+      log.info('Instalando atualização e reiniciando...')
       autoUpdater.quitAndInstall()
     })
 
-    autoUpdater.checkForUpdates().catch(() => {})
+    autoUpdater.checkForUpdates().catch(err => {
+      log.error('Erro fatal ao verificar atualizações:', err)
+    })
   }
 })
 
