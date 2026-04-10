@@ -3,7 +3,8 @@ import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
 import log from 'electron-log'
-import { autoUpdater } from 'electron-updater'
+import pkgUpdater from 'electron-updater'
+const { autoUpdater } = pkgUpdater
 
 // Configuração básica do log
 log.transports.file.level = 'info'
