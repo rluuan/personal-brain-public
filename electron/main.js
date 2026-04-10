@@ -4,6 +4,16 @@ import path from 'path'
 import fs from 'fs'
 import log from 'electron-log'
 
+// Configuração básica do log
+log.transports.file.level = 'info'
+log.info('================================')
+log.info('=== INICIANDO PERSONAL BRAIN ===')
+log.info('Versão:', app.getVersion())
+log.info('Arquitetura:', process.arch)
+log.info('Plataforma:', process.platform)
+log.info('Is Packaged:', app.isPackaged)
+log.info('================================')
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
 
@@ -61,12 +71,13 @@ app.whenReady().then(async () => {
   const win = createWindow()
 
   if (app.isPackaged) {
+    log.info('App está empacotado (isPackaged: true). Iniciando auto-updater...')
     const { autoUpdater } = await import('electron-updater')
     
-    // Configurar logs: o arquivo fica em %AppData%/personal-brain/logs/main.log
-    log.transports.file.level = 'info'
+    // Conecta o autoUpdater ao nosso logger
     autoUpdater.logger = log
-    log.info('App iniciando (packaged). Verificando atualizações...')
+    
+    log.info('Provider configurado:', autoUpdater.getFeedURL())
 
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
