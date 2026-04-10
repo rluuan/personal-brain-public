@@ -11,7 +11,9 @@ import NicknameModal from './components/NicknameModal'
 import KeyModal from './components/KeyModal'
 import SyncModal from './components/SyncModal'
 import SettingsModal from './components/SettingsModal'
+import ScreenkeyOverlay from './components/ScreenkeyOverlay'
 import { useNotesStore } from './store/useNotesStore'
+import { Notification } from './components/common/Notification'
 import { isEncrypted } from './crypto'
 
 // ── New Note Modal ────────────────────────────────────────────────────────────
@@ -214,8 +216,14 @@ export default function App() {
   const dragging = useRef(false)
   const startX   = useRef(0)
   const startW   = useRef(0)
+  const { revealInExplorer } = useNotesStore()
 
-  const { load, loading, user, loginUser, settings, createNote, encryptionKey, setEncryptionKey, notes } = useNotesStore()
+  const [notification, setNotification] = useState(null)
+  const showNotification = (msg, type = 'success', onAction = null, actionLabel = 'Abrir') => {
+    setNotification({ msg, type, onAction, actionLabel })
+  }
+
+  const { load, loading, user, loginUser, settings, createNote, encryptionKey, setEncryptionKey, notes, checkNovidades } = useNotesStore()
 
   // Apply theme CSS variables whenever settings change
   useEffect(() => {
@@ -224,6 +232,15 @@ export default function App() {
   }, [settings.primaryColor, settings.secondaryColor])
 
   useEffect(() => { load() }, [load])
+
+  // After load completes and user is set, check/seed Novidades note
+  // Deferred so Editor is mounted before we change the active note
+  useEffect(() => {
+    if (!loading && user) {
+      const t = setTimeout(() => checkNovidades(), 300)
+      return () => clearTimeout(t)
+    }
+  }, [loading, user])
 
   // Detect mobile
   useEffect(() => {
@@ -389,7 +406,11 @@ export default function App() {
 
         {/* ── Editor ── */}
         <div className={`flex-1 overflow-hidden ${isMobile ? 'editor-main-area' : ''}`}>
-          <Editor onImport={openImport} />
+          <Editor 
+            onImport={openImport} 
+            showNotification={showNotification}
+            revealInExplorer={revealInExplorer}
+          />
         </div>
       </div>
 
@@ -426,11 +447,30 @@ export default function App() {
       {showNewNote  && <NewNoteModal onClose={() => setShowNewNote(false)} onCreate={async (title, folderId) => { await createNote(title, folderId); if (isMobile) setMobileSidebarOpen(false) }} />}
       {showSearch   && <SearchModal  onClose={() => setShowSearch(false)} />}
       {showSync     && <SyncModal    onClose={() => setShowSync(false)} />}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && (
+        <SettingsModal 
+          onClose={() => setShowSettings(false)} 
+          showNotification={showNotification}
+          revealInExplorer={revealInExplorer}
+        />
+      )}
       {showImport   && (
         <ImportModal
           defaultFolderId={importFolderId}
           onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {/* Screenkey overlay */}
+      {settings.extra?.screenKey && <ScreenkeyOverlay />}
+
+      {notification && (
+        <Notification 
+          message={notification.msg} 
+          type={notification.type} 
+          onAction={notification.onAction}
+          actionLabel={notification.actionLabel}
+          onClose={() => setNotification(null)} 
         />
       )}
     </div>

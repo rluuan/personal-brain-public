@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { Link2, ChevronDown, ChevronRight } from 'lucide-react'
 import { useNotesStore } from '../store/useNotesStore'
 
-export default function BacklinksPanel({ noteId }) {
+export default function BacklinksPanel({ noteTitle }) {
   const { getBacklinks, setActiveNote } = useNotesStore()
   const [open, setOpen] = useState(true)
-  const backlinks = getBacklinks(noteId)
+  const backlinks = getBacklinks(noteTitle) || []
 
   if (backlinks.length === 0) return null
 

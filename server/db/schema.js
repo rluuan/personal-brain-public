@@ -1,0 +1,152 @@
+import { getSqlite, getPgPool, tryPostgres, isSqlite, setPgvectorAvailable } from './connection.js'
+
+async function pgExec(sql, label) {
+  try { await getPgPool().query(sql) }
+  catch (e) { console.warn(`[Schema] ${label}: ${e.message}`) }
+}
+
+export async function createSchemaPg() {
+  const pool = getPgPool()
+
+  // 1. Core tables
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id         TEXT PRIMARY KEY,
+      nickname   TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS folders (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name       TEXT NOT NULL,
+      parent_id  TEXT REFERENCES folders(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS notes (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title      TEXT NOT NULL,
+      content    TEXT NOT NULL DEFAULT '',
+      folder_id  TEXT REFERENCES folders(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS user_settings (
+      user_id         TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      primary_color   TEXT NOT NULL DEFAULT '#cba6f7',
+      secondary_color TEXT NOT NULL DEFAULT '#89b4fa',
+      extra           JSONB NOT NULL DEFAULT '{}'
+    );
+  `)
+
+  // 2. pgvector extension (optional)
+  let pgvectorAvailable = false
+  try {
+    await pool.query('CREATE EXTENSION IF NOT EXISTS vector;')
+    pgvectorAvailable = true
+    setPgvectorAvailable(true)
+    console.log('[Schema] pgvector OK')
+  } catch (e) {
+    console.warn('[Schema] pgvector não disponível — RAG desativado:', e.message)
+  }
+
+  // 3. note_chunks table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS note_chunks (
+      id          TEXT PRIMARY KEY,
+      note_id     TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+      user_id     TEXT NOT NULL,
+      chunk_text  TEXT NOT NULL,
+      chunk_index INTEGER NOT NULL DEFAULT 0,
+      embedding   TEXT,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_note_chunks_user ON note_chunks(user_id);
+    CREATE INDEX IF NOT EXISTS idx_note_chunks_note ON note_chunks(note_id);
+  `)
+
+  // 4. Migrate embedding column to vector type if pgvector is available
+  if (pgvectorAvailable) {
+    try {
+      const colInfo = await pool.query(`
+        SELECT data_type FROM information_schema.columns
+        WHERE table_name='note_chunks' AND column_name='embedding'
+      `)
+      const currentType = colInfo.rows[0]?.data_type
+      if (currentType && currentType !== 'USER-DEFINED') {
+        await pool.query('ALTER TABLE note_chunks DROP COLUMN IF EXISTS embedding;')
+        await pool.query('ALTER TABLE note_chunks ADD COLUMN embedding vector(768);')
+        console.log('[Schema] Coluna embedding migrada para vector(768)')
+      }
+    } catch (e) {
+      console.warn('[Schema] Migração de embedding:', e.message)
+    }
+
+    // 5. HNSW index
+    await pgExec(
+      'CREATE INDEX IF NOT EXISTS idx_note_chunks_vector ON note_chunks USING hnsw (embedding vector_cosine_ops);',
+      'Índice HNSW'
+    )
+  }
+
+  console.log(`PostgreSQL schema OK (pgvector: ${pgvectorAvailable ? 'ativo' : 'inativo'})`)
+}
+
+export function createSchemaSqlite() {
+  const db = getSqlite()
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id         TEXT PRIMARY KEY,
+      nickname   TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS folders (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL,
+      name       TEXT NOT NULL,
+      parent_id  TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY(parent_id) REFERENCES folders(id) ON DELETE SET NULL
+    );
+    CREATE TABLE IF NOT EXISTS notes (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL,
+      title      TEXT NOT NULL,
+      content    TEXT NOT NULL DEFAULT '',
+      folder_id  TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS note_chunks (
+      id          TEXT PRIMARY KEY,
+      note_id     TEXT NOT NULL,
+      user_id     TEXT NOT NULL,
+      chunk_text  TEXT NOT NULL,
+      chunk_index INTEGER NOT NULL DEFAULT 0,
+      embedding   TEXT,
+      created_at  TEXT NOT NULL,
+      FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE
+    );
+    CREATE TABLE IF NOT EXISTS user_settings (
+      user_id         TEXT PRIMARY KEY,
+      primary_color   TEXT NOT NULL DEFAULT '#cba6f7',
+      secondary_color TEXT NOT NULL DEFAULT '#89b4fa',
+      extra           TEXT NOT NULL DEFAULT '{}',
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `)
+  console.log('SQLite schema OK')
+}
+
+export async function initDb() {
+  const pgOk = await tryPostgres()
+  if (pgOk) {
+    await createSchemaPg()
+  } else {
+    createSchemaSqlite()
+  }
+  const sqliteFile = isSqlite() ? 'SQLite' : 'PostgreSQL'
+  console.log(`[DB] Usando: ${sqliteFile}`)
+}

@@ -2,9 +2,14 @@ import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
+import rehypeHighlight from 'rehype-highlight'
 import { useNotesStore } from '../store/useNotesStore'
 import InlineGraph from './InlineGraph'
 import DiagramView from './DiagramView'
+import { getLanguageMetadata } from '../utils/languageUtils'
+
+// Highlight.js theme import (Tokyo Night Dark)
+import 'highlight.js/styles/tokyo-night-dark.css'
 
 // Process wiki links [[Title]] and #tags in content before rendering
 function processContent(content, notes) {
@@ -18,10 +23,17 @@ function processContent(content, notes) {
     .replace(/(\]\([^)]+\)) *\n/g, '$1  \n')
 }
 
-export default function MarkdownPreview({ content, activeTool = 'select', onDiagramUpdate }) {
+export default function MarkdownPreview({ content, filename = '', activeTool = 'select', onDiagramUpdate }) {
   const { notes, setActiveNote, getNoteByTitle, createNote } = useNotesStore()
   
-  const processed = React.useMemo(() => processContent(content, notes), [content, notes])
+  const { isMarkdown, alias } = getLanguageMetadata(filename)
+  
+  const processed = React.useMemo(() => {
+    const raw = processContent(content, notes)
+    if (isMarkdown) return raw
+    // For non-markdown files, wrap in code block with correct language alias
+    return `\`\`\`${alias}\n${content}\n\`\`\``
+  }, [content, notes, isMarkdown, alias])
 
   const handleClick = (href) => {
     if (!href) return
@@ -37,6 +49,7 @@ export default function MarkdownPreview({ content, activeTool = 'select', onDiag
     <div className="markdown-preview">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
+        rehypePlugins={[rehypeHighlight]}
         components={{
           a: ({ href, children }) => {
             if (href?.startsWith('wikilink:')) {
@@ -78,6 +91,8 @@ export default function MarkdownPreview({ content, activeTool = 'select', onDiag
                 )
               }
             }
+            // If class exists, rehype-highlight already did its job and we just return the code tag
+            // highlight.js adds classes to the code tag which are styled by the css import
             return <code className={className}>{children}</code>
           },
         }}

@@ -265,6 +265,12 @@ body {
   animation: fadeIn 0.15s ease-out;
 }
 
+/* Screenkey pop animation */
+@keyframes screenkey-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
 /* Resize handle */
 .resize-handle {
   width: 4px;

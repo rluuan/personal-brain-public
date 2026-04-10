@@ -112,24 +112,10 @@ export default function ChatPanel() {
     <div className="flex flex-col h-full" style={{ background: 'rgba(14,14,26,0.4)' }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-2 flex-shrink-0"
+        className="flex items-center px-4 py-2 flex-shrink-0"
         style={{ borderBottom: '1px solid #313244', background: 'rgba(22,22,34,0.5)' }}
       >
         <span className="text-ui-text text-sm font-medium">💬 Chat</span>
-        <label
-          className="flex items-center gap-1.5 text-xs cursor-pointer select-none transition-colors"
-          style={{ color: rag ? '#89b4fa' : '#585b70' }}
-          title="Busca os trechos das suas notas mais relevantes para a pergunta e usa como contexto para a IA responder"
-        >
-          <input
-            type="checkbox"
-            checked={rag}
-            onChange={e => setRag(e.target.checked)}
-            className="accent-blue-400 w-3 h-3"
-          />
-          <span>Buscar nas notas (RAG)</span>
-          <span className="opacity-60 cursor-help">ⓘ</span>
-        </label>
       </div>
 
       {/* Messages */}
@@ -208,18 +194,28 @@ export default function ChatPanel() {
               lineHeight: 1.5,
             }}
           />
-          <button
-            onClick={sendMessage}
-            disabled={streaming || !input.trim()}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0"
-            style={{
-              background: (streaming || !input.trim()) ? '#313244' : '#89b4fa',
-              color:      (streaming || !input.trim()) ? '#585b70' : '#1e1e2e',
-              height:     42,
-            }}
-          >
-            <Send size={14} />
-          </button>
+          <div className="flex flex-col gap-1.5 flex-shrink-0">
+            <label
+              className="flex items-center gap-1 text-[10px] cursor-pointer select-none transition-colors px-2 py-1 rounded-lg"
+              style={{ color: rag ? '#89b4fa' : '#585b70', background: rag ? 'rgba(137,180,250,0.08)' : 'transparent', border: '1px solid', borderColor: rag ? 'rgba(137,180,250,0.25)' : '#313244' }}
+              title="Busca os trechos das suas notas mais relevantes para a pergunta e usa como contexto para a IA responder"
+            >
+              <input type="checkbox" checked={rag} onChange={e => setRag(e.target.checked)} className="accent-blue-400 w-3 h-3" />
+              <span>RAG</span>
+            </label>
+            <button
+              onClick={sendMessage}
+              disabled={streaming || !input.trim()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{
+                background: (streaming || !input.trim()) ? '#313244' : '#89b4fa',
+                color:      (streaming || !input.trim()) ? '#585b70' : '#1e1e2e',
+                height:     42,
+              }}
+            >
+              <Send size={14} />
+            </button>
+          </div>
         </div>
         <div className="mt-1.5 text-ui-muted text-xs opacity-50">
           {rag ? '🔍 RAG ativado — responde com base nas suas notas' : 'RAG desativado — conversa geral'}

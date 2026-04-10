@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Claude Code (não vai pro repositório)
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -56,6 +59,16 @@ server-config.json
 *.json.bak
 notes-export*
 export-*
+*.md
+!README.md
+!CHANGELOG.md
+!LICENSE
+*.txt
+*.pdf
+*.docx
+*.xlsx
+*.odt
+*.rtf
 
 # OS
 .DS_Store

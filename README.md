@@ -1,103 +1,180 @@
-# Personal Brain 🚀 
+<p align="center">
+  <img src="public/icon-512.png" width="96" alt="UAN Brain" />
+</p>
 
-**Este é o primeiro projeto open-source que estou postando!** Estou muito animado em compartilhar o **Personal Brain** com a comunidade. Como é minha primeira contribuição pública, estou totalmente aberto a feedbacks, sugestões e críticas construtivas. O objetivo é aprender e evoluir essa ferramenta continuamente, então sinta-se à vontade para colaborar. Bora evoluir esse projeto juntos!
+<h1 align="center">UAN Brain</h1>
+
+<p align="center">
+  Sistema de anotações pessoal com IA local, editor Vim, RAG, diagramas e criptografia E2E.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Electron-33-47848F?logo=electron&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQLite-default-003B57?logo=sqlite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Ollama-local_AI-black?logo=ollama" />
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-green" />
+</p>
 
 ---
 
-# Personal Brain
+> **Primeira release open-source!** Feedbacks, issues e PRs são muito bem-vindos. Bora evoluir isso juntos.
 
-**Personal Brain** é um sistema de anotações pessoal focado em **Inteligência Artificial** (RAG e Formatação), desenvolvido na web utilizando React, Vite e PostgreSQL local. 
+---
 
-O aplicativo permite a interligação de suas anotações, visualizações completas de grafos interativos de wiki-links, e comunicação bidirecional com a IA baseada nas suas ferramentas locais de inferência com **Ollama**.
+## Screenshot
 
-> [!NOTE]
-> Este projeto é um **MVP** (Minimum Viable Product) focado na demonstração técnica da integração entre LLM local e gestão de conhecimento pessoal.
+> _Adicione um screenshot aqui: tire um print do app, salve como `docs/screenshot.png` e remova este aviso._
+>
+> `![UAN Brain](docs/screenshot.png)`
 
-## 🧠 Conceito e Inspiração
+---
 
-Este projeto foi inspirado na visão de **Andrej Karpathy** sobre o uso de LLMs (Large Language Models) como orquestradores de bases de conhecimento pessoais. A ideia central é que, em vez de apenas armazenar notas passivamente, o usuário utilize a IA como uma ferramenta ativa para:
+## O que é
 
-1.  **Recuperação Contextual (RAG):** Converter um repositório de Markdown em uma base de dados vetorial, permitindo que o Chat localize e correlacione informações que você já esqueceu.
-2.  **Manutenção Automatizada:** Utilizar LLMs para formatar, limpar e sugerir conexões (*backlinks*) entre documentos, reduzindo o esforço manual de organização.
-3.  **Privacidade e Segurança (E2EE):**
-    *   **Criptografia Zero-Knowledge:** Todas as notas são criptografadas diretamente no navegador usando **AES-256** com derivação de chave **PBKDF2**.
-    *   **Privacidade Total:** A sua chave de criptografia nunca sai do seu navegador (armazenada apenas no `localStorage`). O servidor e o banco de dados PostgreSQL armazenam apenas o conteúdo cifrado (*ciphertext*).
-    *   **Processamento Local:** Todo o processamento de IA ocorre via **Ollama** local. Seus dados nunca são enviados para APIs externas de nuvem.
+UAN Brain é uma aplicação desktop (Electron) + web para gestão de conhecimento pessoal. Inspirado na visão de **Andrej Karpathy** sobre usar LLMs como orquestradores de bases de conhecimento: suas notas não ficam apenas armazenadas, elas se tornam uma memória pesquisável e interligada.
 
-**Diferenciais Técnicos:**
-*   **Navegação Rápida:** Atalho `Ctrl + K` para busca instantânea e grafo 3D interativo para visualização de conexões.
-*   **Chat Inteligente:** O Chat integrado realiza busca semântica em tempo real nas suas notas para responder com contexto real através de RAG.
-*   **Formatação Assistida por IA (Magic Sparkles):** 
-    *   Cole um texto bruto e use o botão de "Sparkles" para que a IA gere a estrutura Markdown automaticamente.
-    *   Suporta formatação da **nota completa** ou apenas de um **trecho selecionado**.
-    *   Opção de tradução simultânea durante a formatação.
-*   **Editor Fluido:** Foco em Markdown com preview em tempo real e comandos de formatação rápidos.
+**Tudo roda localmente.** Seus dados nunca saem do seu dispositivo.
 
-## Funcionalidades Principais
+---
 
-- 📝 **Editor Markdown** com Auto-Save instantâneo (Debounce) e quebra de linha real (Enter = nova linha no preview).
-- 🔗 **Wiki-links bidirecionais** automáticos através de `[[Notas]]`.
-- 🕸️ **Painel de Grafo (Inline e Full)** dinâmico, renderizado em canvas, permitindo arrastar os nós (Particle Force Directed Graph).
-- 🪄 **Automação IA e Formatação:** O sistema formata trechos de textos inteiros sem alterar a semântica usando LLM.
-- 💬 **Sincronização RAG e Chat AI:** 
-  - Geração de modelo vetorial (*Embeddings*) local para chunking das anotações em base de dados vetorial usando Postgres.
-  - O Chat consegue recuperar partes idênticas das anotações gerando um raciocínio contextual para a IA através de RAG (Busca e Geração).
-  - Capacidades completas offline.
-- ✨ **Interface de Vidro** moderna através de background dinâmico transparente com controle de densidade e repulsão interativa, criando um UX luxuoso com tema escuro (Catppuccin Macchiato custom).
-- 🗂️ **Gerenciador de Subpastas** completo com drag & drop para reordenação, barra de busca poderosa e interface em múltiplos layouts flexíveis (Edit/Split/Preview/Graph/Chat).
-- 🗓️ **Nota Diária** — botão que cria/abre automaticamente a nota do dia com estrutura de pastas `ano > mês > dia`.
-- 🗂️ **Sistema de Abas** — notas abertas em abas, fecháveis individualmente, com persistência entre sessões.
-- 📊 **Contador de palavras e caracteres** em tempo real no rodapé do editor.
-- 📈 **Métricas de uso** — gráficos de atividade semanal e notas criadas por mês.
-- 📱 **Totalmente responsivo** — navegação mobile com barra inferior e drawer lateral.
-- 🌐 **Importar URL** — cole uma URL e importe o conteúdo da página como nota.
-- 🔒 **Criptografia E2E** — notas criptografadas no navegador com AES-256/PBKDF2. A chave nunca sai do dispositivo.
-- 🖼️ **PWA** — instalável como app com ícone personalizado.
+## Funcionalidades
 
-## Tecnologias
+| | |
+|---|---|
+| 📝 **Editor Markdown** | Auto-save, preview em tempo real, Split/Preview/Edit |
+| ⌨️ **Modo Vim** | CodeMirror 6 + vim keybindings completos (NORMAL/INSERT/VISUAL/REPLACE, `:w`, `:set number`, etc.) |
+| 🔗 **Wiki-links** | `[[Nome da Nota]]` com autocomplete e navegação por clique |
+| 🕸️ **Grafo interativo** | Canvas force-directed com todos os backlinks |
+| 💬 **Chat com RAG** | Pergunta sobre suas notas — a IA busca os trechos relevantes e responde com contexto real |
+| 🪄 **Formatação por IA** | Cole um texto bruto, a IA formata em Markdown automaticamente (seleção ou nota inteira) |
+| 📊 **Diagramas inline** | Blocos ` ```diagram ``` ` renderizados em canvas customizado |
+| 🗓️ **Nota Diária** | Cria/abre a nota do dia automaticamente em `ano > mês > dia` |
+| 🗂️ **Abas** | Notas em abas persistentes, fecháveis com Ctrl+W |
+| 🔒 **Criptografia E2E** | AES-256/PBKDF2 no cliente — servidor só armazena ciphertext |
+| 🔍 **Busca global** | Ctrl+K para busca instantânea |
+| 🎙️ **Transcrição por voz** | Microfone → texto direto no editor (requer HTTPS ou localhost) |
 
-- **Frontend:** React, Zustand (Gerenciador de Estado), TailwindCSS.
-- **Backend:** Node.js, Express.js.
-- **Banco de Dados:** PostgreSQL (`/api` endpoints conectam nativamente). Requer a extensão **[pgvector](https://github.com/pgvector/pgvector)** instalada para busca vetorial nativa.
-- **Inteligência Artificial:** Ollama com suporte a qualquer modelo (Configurável nas configurações do sistema). Por padrão, utiliza `nomic-embed-text` para Embeddings local e `gemma3:12b` para LLM. Sugere-se o mínimo de 8GB de VRAM.
+---
 
-### 🗄️ Esquema do Banco de Dados
-O esquema (tabelas e índices) é criado automaticamente ao iniciar o servidor (`npm run server`). 
+## Stack
 
-> [!IMPORTANT]
-> O servidor tentará habilitar a extensão `vector` automaticamente. Se o seu usuário do banco não for superusuário, você deve rodar o comando abaixo manualmente no seu banco uma vez:
-> `CREATE EXTENSION IF NOT EXISTS vector;`
+- **Frontend:** React 18, Zustand, CodeMirror 6, Tailwind CSS
+- **Backend:** Node.js, Express
+- **Banco de dados:** SQLite (padrão, zero config) · PostgreSQL com pgvector (opcional, para RAG avançado)
+- **IA:** [Ollama](https://ollama.com/) local — modelos configuráveis nas Settings
 
-## Requisitos
-- Node.js (`v18+`)
-- PostgreSQL database (default port: `5432`) com extensão `pgvector`.
-- [Ollama](https://ollama.com/) configurado em localhost: `11434`
-  
-### Configuração Inicial de Modelos IA
-```bash
-# Baixe os modelos na sua máquina
-ollama pull gemma3:12b
-ollama pull nomic-embed-text
-```
+---
 
-## Instalação e Execução
+## Instalação para desenvolvimento
 
-1. Compile / Instale as dependências.
-   ```bash
-   npm install
-   ```
-2. Configure seu PostgreSQL com as senhas padrão ou adicione arquivo `.env`. O banco e as tabelas são inferidas no bootstrap.
-3. Inicie os servidores paralelamente:
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) v18+
+- [Ollama](https://ollama.com/) (opcional — só para funcionalidades de IA)
+
+### Passos
 
 ```bash
-# Inicia a interface na porta padrão Vite
-npm run dev
+# 1. Clone o repositório
+git clone https://github.com/rluuan/personal-brain-public.git
+cd personal-brain-public
 
-# Inicie o sub-sistema em outra aba:
+# 2. Instale as dependências
+npm install
+
+# 3. Inicie o servidor da API (porta 3001)
 npm run server
+
+# 4. Em outro terminal, inicie o frontend (porta 5173)
+npm run dev
 ```
+
+Acesse `http://localhost:5173`.
+
+### Configurar modelos de IA (opcional)
+
+```bash
+ollama pull gemma3:12b        # LLM para formatação e chat
+ollama pull nomic-embed-text  # Embeddings para RAG
+```
+
+Os modelos são configuráveis em **Settings → IA**.
 
 ---
 
-## 📝 Licença
-**AGPL-3.0-or-later. See [LICENSE.](LICENSE) = [https://github.com/rluuan/personal-brain-public/blob/main/LICENSE](https://github.com/rluuan/personal-brain-public/blob/main/LICENSE)**
+## Gerar o instalador desktop (.exe)
+
+O app pode ser empacotado como instalador Windows via Electron.
+
+### 1. Instalar dependências do Electron
+
+```bash
+npm install
+```
+
+### 2. Recompilar módulos nativos para o Electron
+
+O SQLite (`better-sqlite3`) é um módulo nativo e precisa ser recompilado para a versão do Node embutida no Electron:
+
+```bash
+npm run electron:rebuild
+```
+
+### 3. Gerar o instalador
+
+```bash
+npm run electron:build
+```
+
+O instalador será gerado em `dist-electron/UAN Brain Setup x.x.x.exe`.
+
+> **Seus dados não vão no instalador.** O banco de dados e configurações ficam em `%APPDATA%\UAN Brain\` na máquina de quem instalar — não no executável.
+
+---
+
+## Distribuir via GitHub Releases
+
+O jeito padrão de distribuir o instalador é pela aba **Releases** do seu repositório. Cada release pode ter arquivos anexados (`.exe`, `.dmg`, `.AppImage`) que qualquer pessoa baixa diretamente.
+
+### Processo manual (simples)
+
+1. Gere o instalador localmente com `npm run electron:build`
+2. No GitHub, vá em **Releases → Draft a new release**
+3. Crie uma tag de versão (ex: `v1.0.0`)
+4. Arraste o `.exe` de `dist-electron/` para o campo de assets
+5. Publique — o link de download fica disponível para qualquer pessoa
+
+### Processo automatizado (GitHub Actions)
+
+Para gerar e publicar automaticamente a cada tag, crie `.github/workflows/release.yml`:
+
+```yaml
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run electron:rebuild
+      - run: npm run electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Com isso, ao fazer `git tag v1.0.0 && git push origin v1.0.0`, o GitHub Actions gera o instalador e publica automaticamente na aba Releases.
+
+---
+
+## Licença
+
+[AGPL-3.0-or-later](LICENSE)
