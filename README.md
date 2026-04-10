@@ -127,7 +127,6 @@ npm run electron:build
 
 O instalador será gerado em `dist-electron/UAN Brain Setup x.x.x.exe`.
 
-> **Seus dados não vão no instalador.** O banco de dados e configurações ficam em `%APPDATA%\UAN Brain\` na máquina de quem instalar — não no executável.
 
 ---
 
