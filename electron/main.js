@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
 import log from 'electron-log'
+import { autoUpdater } from 'electron-updater'
 
 // Configuração básica do log
 log.transports.file.level = 'info'
@@ -74,8 +75,6 @@ app.whenReady().then(async () => {
     log.info('App está empacotado (isPackaged: true). Iniciando auto-updater...')
     
     try {
-      const { autoUpdater } = await import('electron-updater')
-      
       // Conecta o autoUpdater ao nosso logger
       autoUpdater.logger = log
       
