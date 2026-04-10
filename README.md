@@ -101,6 +101,19 @@ Os modelos são configuráveis em **Settings → IA**.
 
 ---
 
+## Download
+
+Baixe o instalador direto em: **[github.com/rluuan/personal-brain-public/releases](https://github.com/rluuan/personal-brain-public/releases)**
+
+| Arquivo | Descrição |
+|---|---|
+| `Personal Brain Setup x.x.x.exe` | Instalador recomendado. Instala sem precisar de administrador. Recebe atualizações automáticas. |
+| `Personal Brain Portable x.x.x.exe` | Roda sem instalar. Os dados ficam na máquina — não viajam com o `.exe`. |
+
+> **Requisitos:** Windows 10/11 x64 · [Ollama](https://ollama.com/) opcional (só para funcionalidades de IA)
+
+---
+
 ## Gerar o instalador desktop (.exe)
 
 O app pode ser empacotado como instalador Windows via Electron.
@@ -125,7 +138,7 @@ npm run electron:rebuild
 npm run electron:build
 ```
 
-O instalador será gerado em `dist-electron/Personal Brain Setup x.x.x.exe`.
+O instalador será gerado em `dist/Personal Brain Setup x.x.x.exe`.
 
 
 ---
