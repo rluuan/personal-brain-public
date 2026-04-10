@@ -17,4 +17,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['sql.js'],
   },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3001',
+    },
+  },
 })

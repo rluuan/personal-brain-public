@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="public/icon-512.png" width="96" alt="UAN Brain" />
+  <img src="public/icon-512.png" width="96" alt="Personal Brain" />
 </p>
 
-<h1 align="center">UAN Brain</h1>
+<h1 align="center">Personal Brain</h1>
 
 <p align="center">
   Sistema de anotações pessoal com IA local, editor Vim, RAG, diagramas e criptografia E2E.
@@ -24,13 +24,13 @@
 
 ## Screenshot
 
-![UAN Brain](docs/screenshot.png)
+![Personal Brain](docs/screenshot.png)
 
 ---
 
 ## O que é
 
-UAN Brain é uma aplicação desktop (Electron) + web para gestão de conhecimento pessoal. Inspirado na visão de **Andrej Karpathy** sobre usar LLMs como orquestradores de bases de conhecimento: suas notas não ficam apenas armazenadas, elas se tornam uma memória pesquisável e interligada.
+Personal Brain é uma aplicação desktop (Electron) + web para gestão de conhecimento pessoal. Inspirado na visão de **Andrej Karpathy** sobre usar LLMs como orquestradores de bases de conhecimento: suas notas não ficam apenas armazenadas, elas se tornam uma memória pesquisável e interligada.
 
 **Tudo roda localmente.** Seus dados nunca saem do seu dispositivo.
 
@@ -125,7 +125,7 @@ npm run electron:rebuild
 npm run electron:build
 ```
 
-O instalador será gerado em `dist-electron/UAN Brain Setup x.x.x.exe`.
+O instalador será gerado em `dist-electron/Personal Brain Setup x.x.x.exe`.
 
 
 ---

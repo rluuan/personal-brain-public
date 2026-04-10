@@ -35,14 +35,16 @@ function getLocalIPs() {
 }
 
 // Serve frontend in Electron production build
-if (process.env.STATIC_DIR) {
-  app.use(express.static(process.env.STATIC_DIR))
-  app.get(/^(?!\/api).*$/, (req, res) => {
-    res.sendFile(path.join(process.env.STATIC_DIR, 'index.html'))
-  })
-}
+export async function startServer({ staticDir } = {}) {
+  const dir = staticDir || process.env.STATIC_DIR
 
-export async function startServer() {
+  if (dir) {
+    app.use(express.static(dir))
+    app.get(/^(?!\/api).*$/, (req, res) => {
+      res.sendFile(path.join(dir, 'index.html'))
+    })
+  }
+
   await initDb()
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Personal Brain API → http://localhost:${PORT}`)

@@ -1,8 +1,18 @@
 import { Router } from 'express'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import path from 'path'
 import { loadConfig, saveConfig, getConfig } from '../config.js'
 import { isSqlite, getSqliteFilePath } from '../db/connection.js'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const { version } = JSON.parse(readFileSync(path.join(__dirname, '../../package.json'), 'utf8'))
+
 const router = Router()
+
+router.get('/version', (req, res) => {
+  res.json({ version })
+})
 
 router.get('/config', (req, res) => {
   const config = getConfig()
