@@ -1,6 +1,6 @@
 {
   "name": "personal-brain",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "main": "electron/main.js",
@@ -14,8 +14,8 @@
     "electron:rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "build": {
-    "appId": "com.uan.brain",
-    "productName": "UAN Brain",
+    "appId": "com.personal.brain",
+    "productName": "Personal Brain",
     "files": [
       "dist/**",
       "electron/**",
@@ -25,17 +25,40 @@
       "package.json"
     ],
     "asarUnpack": [
-      "node_modules/better-sqlite3/**"
+      "node_modules/better-sqlite3/**",
+      "dist/**"
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "public/favicon.png"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon-512.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "UAN Brain"
+      "shortcutName": "Personal Brain",
+      "perMachine": false
+    },
+    "portable": {
+      "artifactName": "${productName} Portable ${version}.exe"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "rluuan",
+      "repo": "personal-brain-public"
     },
     "extraMetadata": {
       "main": "electron/main.js"
@@ -62,6 +85,7 @@
     "@codemirror/view": "^6.41.0",
     "@replit/codemirror-vim": "^6.3.0",
     "better-sqlite3": "^12.8.0",
+    "electron-updater": "^6.3.0",
     "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "crypto-js": "^4.2.0",
