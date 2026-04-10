@@ -131,48 +131,6 @@ O instalador será gerado em `dist-electron/UAN Brain Setup x.x.x.exe`.
 
 ---
 
-## Distribuir via GitHub Releases
-
-O jeito padrão de distribuir o instalador é pela aba **Releases** do seu repositório. Cada release pode ter arquivos anexados (`.exe`, `.dmg`, `.AppImage`) que qualquer pessoa baixa diretamente.
-
-### Processo manual (simples)
-
-1. Gere o instalador localmente com `npm run electron:build`
-2. No GitHub, vá em **Releases → Draft a new release**
-3. Crie uma tag de versão (ex: `v1.0.0`)
-4. Arraste o `.exe` de `dist-electron/` para o campo de assets
-5. Publique — o link de download fica disponível para qualquer pessoa
-
-### Processo automatizado (GitHub Actions)
-
-Para gerar e publicar automaticamente a cada tag, crie `.github/workflows/release.yml`:
-
-```yaml
-name: Release
-
-on:
-  push:
-    tags: ['v*']
-
-jobs:
-  build:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-      - run: npm run electron:rebuild
-      - run: npm run electron:build
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
-
-Com isso, ao fazer `git tag v1.0.0 && git push origin v1.0.0`, o GitHub Actions gera o instalador e publica automaticamente na aba Releases.
-
----
-
 ## Licença
 
 [AGPL-3.0-or-later](LICENSE)
