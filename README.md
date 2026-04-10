@@ -24,9 +24,7 @@
 
 ## Screenshot
 
-> _Adicione um screenshot aqui: tire um print do app, salve como `docs/screenshot.png` e remova este aviso._
->
-> `![UAN Brain](docs/screenshot.png)`
+![UAN Brain](docs/screenshot.png)
 
 ---
 
