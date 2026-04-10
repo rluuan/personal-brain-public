@@ -72,51 +72,56 @@ app.whenReady().then(async () => {
 
   if (app.isPackaged) {
     log.info('App está empacotado (isPackaged: true). Iniciando auto-updater...')
-    const { autoUpdater } = await import('electron-updater')
     
-    // Conecta o autoUpdater ao nosso logger
-    autoUpdater.logger = log
-    
-    log.info('Provider configurado:', autoUpdater.getFeedURL())
+    try {
+      const { autoUpdater } = await import('electron-updater')
+      
+      // Conecta o autoUpdater ao nosso logger
+      autoUpdater.logger = log
+      
+      log.info('Configurando auto-updater...')
+      autoUpdater.autoDownload = true
+      autoUpdater.autoInstallOnAppQuit = true
 
-    autoUpdater.autoDownload = true
-    autoUpdater.autoInstallOnAppQuit = true
+      autoUpdater.on('checking-for-update', () => {
+        log.info('Checking for update...')
+      })
 
-    autoUpdater.on('checking-for-update', () => {
-      log.info('Checking for update...')
-    })
+      autoUpdater.on('update-available', (info) => {
+        log.info('Update available. Versão:', info.version)
+        win.webContents.send('update-available', info)
+      })
 
-    autoUpdater.on('update-available', (info) => {
-      log.info('Update available. Versão:', info.version)
-      win.webContents.send('update-available', info)
-    })
+      autoUpdater.on('update-not-available', (info) => {
+        log.info('Update not available.')
+      })
 
-    autoUpdater.on('update-not-available', (info) => {
-      log.info('Update not available.')
-    })
+      autoUpdater.on('error', (err) => {
+        log.error('Erro reportado pelo auto-updater:', err)
+      })
 
-    autoUpdater.on('error', (err) => {
-      log.error('Error in auto-updater:', err)
-    })
+      autoUpdater.on('download-progress', (progressObj) => {
+        log.info(`Download em progresso: ${progressObj.percent.toFixed(2)}%`)
+        win.webContents.send('download-progress', progressObj)
+      })
 
-    autoUpdater.on('download-progress', (progressObj) => {
-      log.info(`Download em progresso: ${progressObj.percent.toFixed(2)}%`)
-      win.webContents.send('download-progress', progressObj)
-    })
+      autoUpdater.on('update-downloaded', (info) => {
+        log.info('Update baixado; será instalado ao fechar o app')
+        win.webContents.send('update-downloaded', info)
+      })
 
-    autoUpdater.on('update-downloaded', (info) => {
-      log.info('Update baixado; será instalado ao fechar o app')
-      win.webContents.send('update-downloaded', info)
-    })
+      ipcMain.on('install-update', () => {
+        log.info('Instalando atualização e reiniciando...')
+        autoUpdater.quitAndInstall()
+      })
 
-    ipcMain.on('install-update', () => {
-      log.info('Instalando atualização e reiniciando...')
-      autoUpdater.quitAndInstall()
-    })
-
-    autoUpdater.checkForUpdates().catch(err => {
-      log.error('Erro fatal ao verificar atualizações:', err)
-    })
+      log.info('Chamando checkForUpdates...')
+      autoUpdater.checkForUpdates().catch(err => {
+        log.error('Erro ao executar checkForUpdates:', err)
+      })
+    } catch (err) {
+      log.error('FALHA CRÍTICA AO CARREGAR ELECTRON-UPDATER:', err)
+    }
   }
 })
 
