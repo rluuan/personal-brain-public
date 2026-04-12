@@ -11,7 +11,6 @@ import MarkdownPreview from './MarkdownPreview'
 import BacklinksPanel from './BacklinksPanel'
 import InlineGraph from './InlineGraph'
 import ChatPanel from './ChatPanel'
-import DiagramView from './DiagramView'
 import VimEditor from './VimEditor'
 import { BalloonOverlay } from './common/BalloonOverlay'
 import { EditorTabs } from './editor/EditorTabs'
@@ -45,6 +44,8 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const vimEditorRef = useRef(null)
   const lastNoteId  = useRef(null)
   const saveTimeout = useRef(null)
+  // Tracks latest content without triggering re-renders (used by diagram saves)
+  const latestContentRef = useRef('')
 
   // ── Sync Logic ────────────────────────────────────────────────────────────
   // Reset so sync re-runs when toggling vim mode (textarea remounts fresh)
@@ -55,23 +56,62 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     const val = activeNote.content || ''
     if (activeNote.id !== lastNoteId.current) {
       lastNoteId.current = activeNote.id
-      if (textareaRef.current) textareaRef.current.value = val
+      latestContentRef.current = val
+      if (textareaRef.current) textareaRef.current.value = collapseAllDiagrams(val)
       setPreviewContent(val)
       setContentHidden(localStorage.getItem(noteHideKey(activeNote.id)) === '1')
       setNoteFont(localStorage.getItem(noteFontKey(activeNote.id)) || 'Inter')
     } else if (textareaRef.current && textareaRef.current.value !== val) {
-      // If note didn't change but mode did (remount), sync value if different
-      textareaRef.current.value = val
+      latestContentRef.current = val
+      textareaRef.current.value = collapseAllDiagrams(val)
       setPreviewContent(val)
     }
   }, [activeNote?.id, activeNote?.content, vimMode, mode])
+
+  // ── Diagram fold helpers ─────────────────────────────────────────────────
+  const foldedDiagramsRef = useRef(new Map()) // id → originalBlock
+
+  const FOLD_PLACEHOLDER = (id) => `\`\`\`diagram:collapsed:${id}\`\`\``
+
+  // Returns display value of content with all diagram blocks collapsed
+  const collapseAllDiagrams = useCallback((raw) => {
+    const map = new Map()
+    const display = raw.replace(/```diagram\n(\{[\s\S]*?\})\n```/g, (match, jsonStr) => {
+      try {
+        const id = JSON.parse(jsonStr)._id
+        if (id) { map.set(id, match); return FOLD_PLACEHOLDER(id) }
+      } catch {}
+      return match
+    })
+    foldedDiagramsRef.current = map
+    return display
+  }, [])
+
+  // Expand a single collapsed diagram in the textarea
+  const expandDiagram = useCallback((id) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const original = foldedDiagramsRef.current.get(id)
+    if (!original) return
+    const newVal = textarea.value.replace(FOLD_PLACEHOLDER(id), original)
+    foldedDiagramsRef.current.delete(id)
+    textarea.value = newVal
+    latestContentRef.current = textarea.value
+  }, [])
+
+  // Collapse a single diagram back
+  const collapseDiagram = useCallback((id) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const display = collapseAllDiagrams(textarea.value)
+    textarea.value = display
+  }, [collapseAllDiagrams])
 
   // ── AI State ─────────────────────────────────────────────────────────────
   const [aiStatus, setAiStatus]     = useState(null)
   const [aiProgress, setAiProgress] = useState({ chunk: 0, total: 0 })
   const [aiTranslate, setAiTranslate] = useState(false)
   const [showBalloons, setShowBalloons] = useState(false)
-  const [activeDiagramTool, setActiveDiagramTool] = useState('select')
   const aiAbortRef = useRef(null)
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -88,8 +128,13 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   }
 
   const handleChange = (e) => {
-    const content = e.target.value
+    let content = e.target.value
     const cursor  = e.target.selectionStart
+    // Restore collapsed diagram placeholders to full JSON before saving/previewing
+    for (const [id, originalBlock] of foldedDiagramsRef.current) {
+      content = content.replace(FOLD_PLACEHOLDER(id), originalBlock)
+    }
+    latestContentRef.current = content
     setPreviewContent(content)
 
     clearTimeout(saveTimeout.current)
@@ -290,9 +335,11 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   }
 
   const insertDiagram = () => {
-    const defaultData = JSON.stringify({ _id: `diag-${Date.now()}`, nodes: [], edges: [] }, null, 2)
+    const defaultData = JSON.stringify({ _id: `diag-${Date.now()}`, elements: [], appState: { theme: 'dark' } }, null, 2)
     const block = `\n\`\`\`diagram\n${defaultData}\n\`\`\`\n`
     insertText(block)
+    // Collapse immediately after inserting so the JSON doesn't clutter the editor
+    if (textareaRef.current) textareaRef.current.value = collapseAllDiagrams(textareaRef.current.value)
     setMode('split')
   }
 
@@ -409,8 +456,6 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
           noteFont={noteFont}
           onNoteFontChange={changeNoteFont}
           onInsertDiagram={insertDiagram}
-          activeDiagramTool={activeDiagramTool}
-          setActiveDiagramTool={setActiveDiagramTool}
         />
       )}
 
@@ -434,18 +479,25 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                   vimrc={settings?.extra?.vimrc || ''}
                   language={langExt}
                   onCloseTab={() => closeTab(activeNoteId)}
-                  onChange={(val) => { setPreviewContent(val); if (activeNote) updateNote(activeNote.id, { content: val }) }}
+                  onChange={(val) => { latestContentRef.current = val; setPreviewContent(val); if (activeNote) updateNote(activeNote.id, { content: val }) }}
                   onSave={(val) => { if (activeNote) updateNote(activeNote.id, { content: val }) }}
                 />
               ) : (
                 <textarea
                   ref={textareaRef}
-                  className="editor-textarea flex-1 p-6"
+                  className="editor-textarea"
                   defaultValue={previewContent}
                   onChange={handleChange}
                   onKeyDown={handleTabKey}
+                  onClick={(e) => {
+                    const ta = e.target
+                    const lineIndex = ta.value.slice(0, ta.selectionStart).split('\n').length - 1
+                    const line = ta.value.split('\n')[lineIndex] || ''
+                    const match = line.match(/^```diagram:collapsed:(.+)```$/)
+                    if (match) expandDiagram(match[1])
+                  }}
                   spellCheck={false}
-                  style={{ background: 'transparent', fontFamily: `'${noteFont}', sans-serif` }}
+                  style={{ fontFamily: `'${noteFont}', sans-serif` }}
                 />
               )}
               <WikiSuggest suggest={wikiSuggest} onApply={applySuggestion} />
@@ -463,11 +515,21 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                 <MarkdownPreview 
                   content={previewContent + (interimSpeech ? ` _${interimSpeech}_` : '')} 
                   filename={activeNote?.title}
-                  onDiagramUpdate={(oldJ, newJ) => {
-                  const newVal = previewContent.replace(oldJ, newJ)
-                  setPreviewContent(newVal)
-                  if (activeNote) updateNote(activeNote.id, { content: newVal })
-                }} activeTool={activeDiagramTool} />
+                  onDiagramUpdate={(diagramId, newJson) => {
+                    // Replace diagram block by _id — avoids stale codeValue after first save
+                    const newVal = latestContentRef.current.replace(
+                      /```diagram\n([\s\S]*?)```/g,
+                      (match, jsonStr) => {
+                        try { if (JSON.parse(jsonStr)._id === diagramId) return `\`\`\`diagram\n${newJson}\n\`\`\`` }
+                        catch {}
+                        return match
+                      }
+                    )
+                    latestContentRef.current = newVal
+                    // Sync textarea so activeNote.content useEffect doesn't trigger setPreviewContent
+                    if (textareaRef.current) textareaRef.current.value = newVal
+                    if (activeNote) updateNote(activeNote.id, { content: newVal })
+                  }} />
                 <BacklinksPanel noteTitle={activeNote.title} notes={notes} onSelect={setActiveNote} />
               </div>
             </div>

@@ -2,7 +2,7 @@ import React from 'react'
 import {
   Heading1, Heading2, Bold, Italic, Strikethrough, Code, Link2, Hash,
   List, ListOrdered, CheckSquare, Quote, Minus, Table, Sparkles, StopCircle,
-  Upload, Download, EyeOff, Eye, Type, Workflow, MousePointer2, Square, ArrowUpRight, Mic
+  Upload, Download, EyeOff, Eye, Type, Workflow, Mic
 } from 'lucide-react'
 
 export const FORMAT_GROUPS = [
@@ -40,7 +40,7 @@ export function EditorToolbar({
   onInsert, onImport, onExport, onAiFormat, onToggleHide, onToggleSpeech,
   aiStatus, aiProgress, aiTranslate, setAiTranslate, onCancelAi,
   contentHidden, noteFont, onNoteFontChange,
-  onInsertDiagram, activeDiagramTool, setActiveDiagramTool
+  onInsertDiagram
 }) {
   return (
     <div
@@ -164,36 +164,15 @@ export function EditorToolbar({
         </select>
       </div>
 
-      {/* Diagram Tools */}
+      {/* Diagram */}
       <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: '#313244' }} />
-      <div className="flex items-center gap-0.5 bg-[#181825]/60 rounded-lg p-0.5 border border-[#313244]/50 shadow-inner">
-        <button
-          onClick={onInsertDiagram}
-          title="Inserir Diagrama (Excalidraw)"
-          className="p-1.5 rounded-md hover:bg-ui-hover text-[#cba6f7] transition-all hover:scale-110 active:scale-95"
-        >
-          <Workflow size={14} />
-        </button>
-        <div className="w-px h-4 bg-[#313244] mx-1" />
-        {[
-          { id: 'select', icon: MousePointer2, title: 'Selecionar (V)' },
-          { id: 'rect',   icon: Square,        title: 'Retângulo (R)' },
-          { id: 'arrow',  icon: ArrowUpRight,  title: 'Seta de Conexão (S)' },
-        ].map(tool => (
-          <button
-            key={tool.id}
-            onClick={() => setActiveDiagramTool(tool.id)}
-            title={tool.title}
-            className={`p-1.5 rounded-md transition-all duration-200 ${
-              activeDiagramTool === tool.id 
-                ? 'bg-[#cba6f7]/20 text-[#cba6f7]' 
-                : 'text-ui-muted hover:text-ui-text hover:bg-ui-hover'
-            }`}
-          >
-            <tool.icon size={13} />
-          </button>
-        ))}
-      </div>
+      <button
+        onClick={onInsertDiagram}
+        title="Inserir Diagrama (Excalidraw)"
+        className="p-1.5 rounded-md hover:bg-ui-hover text-[#cba6f7] transition-all hover:scale-110 active:scale-95"
+      >
+        <Workflow size={14} />
+      </button>
     </div>
   )
 }

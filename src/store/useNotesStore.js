@@ -118,7 +118,10 @@ export const useNotesStore = create((set, get) => ({
     if (!existing) {
       await get().createNote(NOVIDADES_TITLE, null, NOVIDADES_CONTENT)
     } else {
-      get().setActiveNote(existing.id)
+      // Only navigate to Novidades if the user has no saved tabs (fresh session)
+      const savedTabs = JSON.parse(localStorage.getItem(OPEN_TABS_KEY) || '[]')
+      const hasRestoredTabs = savedTabs.some(id => notes.find(n => n.id === id))
+      if (!hasRestoredTabs) get().setActiveNote(existing.id)
     }
   },
 }))

@@ -23,7 +23,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
     exportNotesAsMd, exportDb 
   } = useNotesStore()
   
-  const [tab, setTab] = useState('appearance')
+  const [tab, setTab] = useState('general')
   
   // Form State
   const [primary, setPrimary]         = useState(settings.primaryColor)
@@ -189,7 +189,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="rounded-xl shadow-2xl w-full max-w-2xl fade-in flex flex-col"
+        className="rounded-xl shadow-2xl w-full max-w-3xl fade-in flex flex-col"
         style={{ background: '#1e1e2e', border: '1px solid #313244', maxHeight: '85vh' }}
       >
         {/* Header */}

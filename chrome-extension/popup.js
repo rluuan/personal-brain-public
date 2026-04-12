@@ -18,16 +18,17 @@ async function flushQueue() {
   })
 }
 
-async function checkConnection(apiUrl) {
+const DEFAULT_API_URL = 'http://localhost:3001'
+
+async function checkConnection() {
   try {
-    const res = await fetch(`${apiUrl}/api/config`, { signal: AbortSignal.timeout(3000) })
+    const res = await fetch(`${DEFAULT_API_URL}/api/config`, { signal: AbortSignal.timeout(3000) })
     return res.ok
   } catch { return false }
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  const apiUrlEl   = document.getElementById('apiUrl')
   const userIdEl   = document.getElementById('userId')
   const enabledEl  = document.getElementById('enabled')
   const statusDot  = document.getElementById('statusDot')
@@ -39,8 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load current config
   const { config, queueLength } = await loadStatus()
-  apiUrlEl.value  = config.apiUrl  || 'http://localhost:3001'
-  userIdEl.value  = config.userId  || ''
+  userIdEl.value    = config.userId  || ''
   enabledEl.checked = config.enabled !== false
 
   // Update queue badge
@@ -48,14 +48,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   queueBadge.className = `queue-badge${queueLength === 0 ? ' empty' : ''}`
 
   // Check connection
-  const isOnline = await checkConnection(apiUrlEl.value)
+  const isOnline = await checkConnection()
   statusDot.className = `dot ${isOnline ? 'online' : 'offline'}`
   statusText.textContent = isOnline ? 'Conectado ao Personal Brain' : 'Servidor não encontrado'
 
   // Save button
   saveBtn.addEventListener('click', async () => {
     const newConfig = {
-      apiUrl:  apiUrlEl.value.trim().replace(/\/$/, ''),
+      apiUrl:  DEFAULT_API_URL,
       userId:  userIdEl.value.trim(),
       enabled: enabledEl.checked,
     }
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => successMsg.style.display = 'none', 2000)
 
     // Re-check connection
-    const online = await checkConnection(newConfig.apiUrl)
+    const online = await checkConnection()
     statusDot.className = `dot ${online ? 'online' : 'offline'}`
     statusText.textContent = online ? 'Conectado ao Personal Brain' : 'Servidor não encontrado'
   })
