@@ -1,6 +1,6 @@
 import React from 'react'
 
-export function GeneralTab({ projectName, setProjectName, ignoreNovidades, setIgnoreNovidades, screenKey, setScreenKey, primary }) {
+export function GeneralTab({ projectName, setProjectName, ignoreNovidades, setIgnoreNovidades, screenKey, setScreenKey, liveMemoryEnabled, setLiveMemoryEnabled, primary }) {
   return (
     <>
       <div>
@@ -38,6 +38,30 @@ export function GeneralTab({ projectName, setProjectName, ignoreNovidades, setIg
             flexShrink: 0,
           }} />
           {ignoreNovidades ? 'ON' : 'OFF'}
+        </button>
+      </div>
+
+      <div className="rounded-lg px-4 py-3 flex items-center justify-between gap-4" style={{ background: '#252535', border: '1px solid #313244' }}>
+        <div className="min-w-0">
+          <div className="text-xs text-ui-text font-medium">Live Memory</div>
+          <div className="text-[10px] text-ui-muted mt-0.5">Aceita capturas enviadas pela extensão do Chrome. Desative para pausar a captura sem precisar remover a extensão.</div>
+        </div>
+        <button
+          onClick={() => setLiveMemoryEnabled(v => !v)}
+          className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+          style={{
+            background: liveMemoryEnabled ? 'rgba(59,130,246,0.15)' : 'rgba(69,71,90,0.4)',
+            border: `1px solid ${liveMemoryEnabled ? '#3b82f6' : '#45475a'}`,
+            color: liveMemoryEnabled ? '#3b82f6' : '#6c7086',
+            minWidth: 64,
+          }}
+        >
+          <span style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+            background: liveMemoryEnabled ? '#3b82f6' : '#45475a',
+            flexShrink: 0,
+          }} />
+          {liveMemoryEnabled ? 'ON' : 'OFF'}
         </button>
       </div>
 

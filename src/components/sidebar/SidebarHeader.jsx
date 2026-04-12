@@ -1,9 +1,9 @@
 import React from 'react'
-import { CalendarDays, Search, FolderPlus, Upload, FilePlus, RefreshCw } from 'lucide-react'
+import { CalendarDays, Search, FolderPlus, Upload, FilePlus, RefreshCw, Link } from 'lucide-react'
 
-export function SidebarHeader({ 
-  projectName, onSync, openDailyNote, onSearch, 
-  createFolder, onImport, createNote 
+export function SidebarHeader({
+  projectName, onSync, openDailyNote, onSearch,
+  createFolder, onImport, createNote, onLiveMemoryHistory
 }) {
   return (
     <div className="flex items-center justify-between px-3 py-2.5 flex-shrink-0 relative" style={{ borderBottom: '1px solid #313244' }}>
@@ -24,6 +24,7 @@ export function SidebarHeader({
         <button onClick={() => createFolder('Nova Pasta')} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-yellow transition-colors" title="Nova pasta"><FolderPlus size={13} /></button>
         <button onClick={() => onImport(null)} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-blue transition-colors" title="Importar (.md, .txt)"><Upload size={13} /></button>
         <button onClick={() => createNote()} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-ui-accent transition-colors" title="Nova nota"><FilePlus size={13} /></button>
+        <button onClick={onLiveMemoryHistory} className="p-1.5 rounded hover:bg-ui-hover text-ui-muted hover:text-blue-400 transition-colors" title="Live Memory History"><Link size={13} /></button>
       </div>
     </div>
   )

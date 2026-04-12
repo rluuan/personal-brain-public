@@ -36,6 +36,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
   const [vimrc, setVimrc]             = useState(settings.extra?.vimrc || '')
   const [ignoreNovidades, setIgnoreNovidades] = useState(settings.extra?.ignoreNovidades || false)
   const [screenKey, setScreenKey]     = useState(settings.extra?.screenKey || false)
+  const [liveMemoryEnabled, setLiveMemoryEnabled] = useState(settings.extra?.liveMemoryEnabled !== false)
   const [backupFormat, setBackupFormat] = useState('json')
 
   const [saving, setSaving] = useState(false)
@@ -88,7 +89,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
         ...settings.extra, 
         projectName, aiModel, embedModel, 
         fontFamily, vimMode, vimrc, 
-        ignoreNovidades, screenKey 
+        ignoreNovidades, screenKey, liveMemoryEnabled
       }
     })
     document.body.style.fontFamily = `'${fontFamily}', sans-serif`
@@ -229,6 +230,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
               projectName={projectName} setProjectName={setProjectName}
               ignoreNovidades={ignoreNovidades} setIgnoreNovidades={setIgnoreNovidades}
               screenKey={screenKey} setScreenKey={setScreenKey}
+              liveMemoryEnabled={liveMemoryEnabled} setLiveMemoryEnabled={setLiveMemoryEnabled}
               primary={primary}
             />
           )}

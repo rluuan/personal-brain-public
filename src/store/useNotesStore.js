@@ -23,12 +23,14 @@ import { createUserSlice } from './slices/userSlice'
 import { createNotesSlice } from './slices/notesSlice'
 import { createFoldersSlice } from './slices/foldersSlice'
 import { createSettingsSlice } from './slices/settingsSlice'
+import { createLiveMemorySlice } from './slices/liveMemorySlice'
 
 export const useNotesStore = create((set, get) => ({
   ...createUserSlice(set, get),
   ...createNotesSlice(set, get),
   ...createFoldersSlice(set, get),
   ...createSettingsSlice(set, get),
+  ...createLiveMemorySlice(set, get),
 
   // ── Orchestration ──────────────────────────────────────────────────────
   load: async () => {
@@ -102,6 +104,9 @@ export const useNotesStore = create((set, get) => ({
     // Apply saved font family
     const savedFont = settings.extra?.fontFamily
     if (savedFont) document.body.style.fontFamily = `'${savedFont}', sans-serif`
+
+    // Start SSE stream for live memories
+    get().startLiveMemoryStream()
   },
 
   // Called from App after first render — avoids race with Editor mount

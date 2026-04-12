@@ -13,6 +13,7 @@ import settingsRoutes from './routes/settings.js'
 import exportRoutes  from './routes/export.js'
 import aiRoutes      from './routes/ai.js'
 import ragRoutes     from './routes/rag.js'
+import memoryRoutes  from './routes/memory.js'
 
 const app = express()
 app.use(cors())
@@ -27,6 +28,7 @@ app.use('/api', settingsRoutes)
 app.use('/api', exportRoutes)
 app.use('/api', aiRoutes)
 app.use('/api', ragRoutes)
+app.use('/api', memoryRoutes)
 
 const PORT = process.env.PORT || 3001
 

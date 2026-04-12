@@ -49,6 +49,7 @@ export async function tryPostgres() {
       password: config.password,
       database: config.database,
       connectionTimeoutMillis: 5000,
+      min: 1,
     })
     await pgPool.query('SELECT 1')
     return true

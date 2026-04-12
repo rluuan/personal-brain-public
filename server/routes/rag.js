@@ -90,7 +90,7 @@ router.post('/sync/embeddings', async (req, res) => {
 })
 
 router.post('/chat', async (req, res) => {
-  const { message, user_id, rag = false, history = [], ai_model, embed_model } = req.body
+  const { message, user_id, rag = false, history = [], ai_model, embed_model, live_memory_context } = req.body
   if (!message) return res.status(400).json({ error: 'message required' })
 
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
@@ -128,7 +128,8 @@ router.post('/chat', async (req, res) => {
       }
     }
 
-    const CHAT_SYSTEM = `Você é um assistente de conhecimento pessoal. Responda sempre em português, de forma concisa e útil.${contextBlock ? '\n\nUse os trechos de notas abaixo como contexto para responder.' + contextBlock : ''}`
+    const liveCtx = live_memory_context ? `\n\nLinks visitados relevantes:\n${live_memory_context}` : ''
+    const CHAT_SYSTEM = `Você é um assistente de conhecimento pessoal. Responda sempre em português, de forma concisa e útil.${contextBlock ? '\n\nUse os trechos de notas abaixo como contexto para responder.' + contextBlock : ''}${liveCtx}`
     const historyText = history.map(h => `${h.role === 'user' ? 'Usuário' : 'Assistente'}: ${h.content}`).join('\n')
     const prompt = historyText ? `${historyText}\nUsuário: ${message}\nAssistente:` : `Usuário: ${message}\nAssistente:`
 

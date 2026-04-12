@@ -5,7 +5,7 @@
 <h1 align="center">Personal Brain</h1>
 
 <p align="center">
-  Sistema de anotações pessoal com IA local, editor Vim, RAG, diagramas e criptografia E2E.
+  Sistema de anotações pessoal com IA local, editor Vim, RAG, Live Memory, diagramas e criptografia E2E.
 </p>
 
 <p align="center">
@@ -50,8 +50,9 @@ Personal Brain é uma aplicação desktop (Electron) + web para gestão de conhe
 | 🗓️ **Nota Diária** | Cria/abre a nota do dia automaticamente em `ano > mês > dia` |
 | 🗂️ **Abas** | Notas em abas persistentes, fecháveis com Ctrl+W |
 | 🔒 **Criptografia E2E** | AES-256/PBKDF2 no cliente — servidor só armazena ciphertext |
-| 🔍 **Busca global** | Ctrl+K para busca instantânea |
+| 🔍 **Busca global** | Ctrl+K para busca instantânea — inclui notas e links do Live Memory |
 | 🎙️ **Transcrição por voz** | Microfone → texto direto no editor (requer HTTPS ou localhost) |
+| 🔗 **Live Memory** | Extensão Chrome captura automaticamente links visitados e os integra ao grafo, busca e chat com RAG |
 
 ---
 
@@ -98,6 +99,13 @@ ollama pull nomic-embed-text  # Embeddings para RAG
 ```
 
 Os modelos são configuráveis em **Settings → IA**.
+
+### Extensão Chrome — Live Memory (opcional)
+
+1. Abra `chrome://extensions/` → ative **Modo do desenvolvedor**
+2. Clique **Carregar sem compactação** → selecione a pasta `chrome-extension/`
+3. Clique no ícone ⬡ → preencha a URL do servidor (`http://localhost:3001`) e seu nickname → Salvar
+4. Para pausar a captura: **Configurações → Geral → Live Memory → OFF**
 
 ---
 

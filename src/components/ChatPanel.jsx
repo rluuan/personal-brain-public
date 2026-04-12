@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Link } from 'lucide-react'
 import { useNotesStore } from '../store/useNotesStore'
+import { dbSearchLiveMemories } from '../db/database'
 
 const API = `http://${window.location.hostname}:3001`
 
@@ -9,12 +10,13 @@ export default function ChatPanel() {
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Vou te ajudar a encontrar textos que você anotou mas já esqueceu 🔍' },
   ])
-  const [input, setInput]       = useState('')
-  const [rag, setRag]           = useState(false)
-  const [streaming, setStreaming] = useState(false)
-  const [searching, setSearching] = useState(false)
-  const endRef     = useRef(null)
-  const inputRef   = useRef(null)
+  const [input, setInput]         = useState('')
+  const [rag, setRag]             = useState(false)
+  const [ragLiveMemory, setRagLiveMemory] = useState(false)
+  const [streaming, setStreaming]   = useState(false)
+  const [searching, setSearching]   = useState(false)
+  const endRef   = useRef(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -25,30 +27,40 @@ export default function ChatPanel() {
     const userMsg = input.trim()
     setInput('')
 
-    const history = messages.slice(1) // sem a mensagem inicial
+    const history = messages.slice(1)
 
     setMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setStreaming(true)
     setSearching(false)
-
-    // placeholder para a resposta
     setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
     const { settings } = useNotesStore.getState()
     const ai_model    = settings.extra?.aiModel
     const embed_model = settings.extra?.embedModel
 
+    // Fetch live memory context if enabled
+    let liveMemoryContext = null
+    if (ragLiveMemory && user) {
+      try {
+        const results = await dbSearchLiveMemories(user.id, userMsg, 5)
+        if (results.length > 0) {
+          liveMemoryContext = results.map(m => `- ${m.title || m.url} (${m.url})`).join('\n')
+        }
+      } catch { /* ignore */ }
+    }
+
     try {
       const res = await fetch(`${API}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          message: userMsg, 
-          user_id: user?.id, 
-          rag, 
+        body: JSON.stringify({
+          message: userMsg,
+          user_id: user?.id,
+          rag,
           history,
           ai_model,
-          embed_model
+          embed_model,
+          live_memory_context: liveMemoryContext,
         }),
       })
       if (!res.ok) throw new Error(`Servidor: ${res.statusText}`)
@@ -70,12 +82,9 @@ export default function ChatPanel() {
             if (evt.type === 'searching') {
               setSearching(true)
             } else if (evt.type === 'thought') {
-               setMessages(prev => {
+              setMessages(prev => {
                 const copy = [...prev]
-                copy[copy.length - 1] = {
-                  ...copy[copy.length - 1],
-                  thought: evt.text,
-                }
+                copy[copy.length - 1] = { ...copy[copy.length - 1], thought: evt.text }
                 return copy
               })
             } else if (evt.type === 'start') {
@@ -108,13 +117,13 @@ export default function ChatPanel() {
     }
   }
 
+  const noSource = !rag && !ragLiveMemory
+
   return (
     <div className="flex flex-col h-full" style={{ background: 'rgba(14,14,26,0.4)' }}>
       {/* Header */}
-      <div
-        className="flex items-center px-4 py-2 flex-shrink-0"
-        style={{ borderBottom: '1px solid #313244', background: 'rgba(22,22,34,0.5)' }}
-      >
+      <div className="flex items-center px-4 py-2 flex-shrink-0"
+        style={{ borderBottom: '1px solid #313244', background: 'rgba(22,22,34,0.5)' }}>
         <span className="text-ui-text text-sm font-medium">💬 Chat</span>
       </div>
 
@@ -128,12 +137,12 @@ export default function ChatPanel() {
             <div
               className="max-w-[80%] rounded-xl px-4 py-2.5 text-sm fade-in"
               style={{
-                background:   msg.role === 'user' ? 'rgba(137,180,250,0.12)' : 'rgba(37,37,53,0.5)',
-                border:       `1px solid ${msg.role === 'user' ? 'rgba(137,180,250,0.25)' : '#313244'}`,
-                color:        '#cdd6f4',
-                whiteSpace:   'pre-wrap',
-                lineHeight:   1.65,
-                wordBreak:    'break-word',
+                background: msg.role === 'user' ? 'rgba(137,180,250,0.12)' : 'rgba(37,37,53,0.5)',
+                border: `1px solid ${msg.role === 'user' ? 'rgba(137,180,250,0.25)' : '#313244'}`,
+                color: '#cdd6f4',
+                whiteSpace: 'pre-wrap',
+                lineHeight: 1.65,
+                wordBreak: 'break-word',
               }}
             >
               {msg.thought && (
@@ -160,11 +169,9 @@ export default function ChatPanel() {
         {searching && (
           <div className="flex justify-start">
             <span className="mr-2 mt-1 text-ui-muted flex-shrink-0" style={{ fontSize: 16 }}>⬡</span>
-            <div
-              className="rounded-xl px-4 py-2.5 text-xs ai-pulse"
-              style={{ background: 'rgba(37,37,53,0.5)', border: '1px solid #313244', color: '#89b4fa' }}
-            >
-              🔍 Buscando nas notas…
+            <div className="rounded-xl px-4 py-2.5 text-xs ai-pulse"
+              style={{ background: 'rgba(37,37,53,0.5)', border: '1px solid #313244', color: '#89b4fa' }}>
+              🔍 Buscando{rag ? ' nas notas' : ''}{ragLiveMemory ? ' nos links' : ''}…
             </div>
           </div>
         )}
@@ -188,20 +195,41 @@ export default function ChatPanel() {
             className="flex-1 px-3 py-2 rounded-lg text-sm outline-none resize-none"
             style={{
               background: '#252535',
-              border:     '1px solid #45475a',
-              color:      '#cdd6f4',
+              border: '1px solid #45475a',
+              color: '#cdd6f4',
               fontFamily: 'inherit',
               lineHeight: 1.5,
             }}
           />
           <div className="flex flex-col gap-1.5 flex-shrink-0">
+            {/* RAG notes toggle */}
             <label
               className="flex items-center gap-1 text-[10px] cursor-pointer select-none transition-colors px-2 py-1 rounded-lg"
-              style={{ color: rag ? '#89b4fa' : '#585b70', background: rag ? 'rgba(137,180,250,0.08)' : 'transparent', border: '1px solid', borderColor: rag ? 'rgba(137,180,250,0.25)' : '#313244' }}
-              title="Busca os trechos das suas notas mais relevantes para a pergunta e usa como contexto para a IA responder"
+              style={{
+                color: rag ? '#89b4fa' : '#585b70',
+                background: rag ? 'rgba(137,180,250,0.08)' : 'transparent',
+                border: '1px solid',
+                borderColor: rag ? 'rgba(137,180,250,0.25)' : '#313244',
+              }}
+              title="Busca trechos relevantes das suas notas como contexto"
             >
               <input type="checkbox" checked={rag} onChange={e => setRag(e.target.checked)} className="accent-blue-400 w-3 h-3" />
-              <span>RAG</span>
+              <span>Notas</span>
+            </label>
+            {/* RAG live memory toggle */}
+            <label
+              className="flex items-center gap-1 text-[10px] cursor-pointer select-none transition-colors px-2 py-1 rounded-lg"
+              style={{
+                color: ragLiveMemory ? '#60a5fa' : '#585b70',
+                background: ragLiveMemory ? 'rgba(96,165,250,0.08)' : 'transparent',
+                border: '1px solid',
+                borderColor: ragLiveMemory ? 'rgba(96,165,250,0.25)' : '#313244',
+              }}
+              title="Inclui links visitados como contexto da resposta"
+            >
+              <input type="checkbox" checked={ragLiveMemory} onChange={e => setRagLiveMemory(e.target.checked)} className="accent-blue-500 w-3 h-3" />
+              <Link size={9} />
+              <span>Links</span>
             </label>
             <button
               onClick={sendMessage}
@@ -209,8 +237,8 @@ export default function ChatPanel() {
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
               style={{
                 background: (streaming || !input.trim()) ? '#313244' : '#89b4fa',
-                color:      (streaming || !input.trim()) ? '#585b70' : '#1e1e2e',
-                height:     42,
+                color: (streaming || !input.trim()) ? '#585b70' : '#1e1e2e',
+                height: 42,
               }}
             >
               <Send size={14} />
@@ -218,7 +246,10 @@ export default function ChatPanel() {
           </div>
         </div>
         <div className="mt-1.5 text-ui-muted text-xs opacity-50">
-          {rag ? '🔍 RAG ativado — responde com base nas suas notas' : 'RAG desativado — conversa geral'}
+          {noSource
+            ? 'Sem contexto — conversa geral'
+            : `🔍 RAG: ${[rag && 'notas', ragLiveMemory && 'links'].filter(Boolean).join(' + ')}`
+          }
         </div>
       </div>
     </div>

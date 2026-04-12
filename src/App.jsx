@@ -12,6 +12,7 @@ import KeyModal from './components/KeyModal'
 import SyncModal from './components/SyncModal'
 import SettingsModal from './components/SettingsModal'
 import ScreenkeyOverlay from './components/ScreenkeyOverlay'
+import LiveMemoryHistory from './components/LiveMemoryHistory'
 import { useNotesStore } from './store/useNotesStore'
 import { Notification } from './components/common/Notification'
 import { isEncrypted } from './crypto'
@@ -207,6 +208,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showImport,   setShowImport]   = useState(false)
   const [showNewNote,  setShowNewNote]  = useState(false)
+  const [showLiveMemoryHistory, setShowLiveMemoryHistory] = useState(false)
   const [importFolderId, setImportFolderId] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -358,6 +360,7 @@ export default function App() {
               onSync={() => { setShowSync(true); setMobileSidebarOpen(false) }}
               onSettings={() => { setShowSettings(true); setMobileSidebarOpen(false) }}
               onImport={openImport}
+              onLiveMemoryHistory={() => setShowLiveMemoryHistory(true)}
             />
           </div>
         ) : (
@@ -368,6 +371,7 @@ export default function App() {
                 onSync={() => setShowSync(true)}
                 onSettings={() => setShowSettings(true)}
                 onImport={openImport}
+                onLiveMemoryHistory={() => setShowLiveMemoryHistory(true)}
               />
             </div>
           )
@@ -460,6 +464,7 @@ export default function App() {
           onClose={() => setShowImport(false)}
         />
       )}
+      {showLiveMemoryHistory && <LiveMemoryHistory onClose={() => setShowLiveMemoryHistory(false)} />}
 
       {/* Screenkey overlay */}
       {settings.extra?.screenKey && <ScreenkeyOverlay />}

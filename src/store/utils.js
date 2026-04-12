@@ -23,25 +23,45 @@ Bem-vindo à versão mais recente do **Personal Brain**! Aqui estão as funciona
 
 ---
 
+## 🔗 Live Memory — Captura automática de links
+
+Todo site que você visita no Chrome pode ser salvo automaticamente no Personal Brain via extensão.
+
+- **Extensão Chrome** (Manifest V3) na pasta \`chrome-extension/\` do projeto
+- Carregue em \`chrome://extensions/\` → Modo desenvolvedor → Carregar sem compactação
+- Configure a URL do servidor (\`http://localhost:3001\`) e seu nickname no popup da extensão
+- Fila offline: links capturados sem conexão são enviados ao reconectar
+- Sem duplicatas: mesma URL nunca é salva duas vezes
+
+### Como acessar
+
+- Clique no ícone 🔗 na barra lateral para ver o **histórico completo** de links
+- Busca, paginação, exportar JSON, criar nota a partir de um link — tudo na mesma tela
+
+### Grafo interativo
+
+Nós de Live Memory aparecem em **azul** no grafo. Clique com botão direito para abrir o link ou criar uma nota a partir dele.
+
+### Chat com contexto de links
+
+No ChatPanel, ative o toggle **Links** para que a IA use seus links visitados como contexto da conversa.
+
+### Ativar / Desativar
+
+Vá em **Configurações → Geral → Live Memory** para pausar a captura sem precisar remover a extensão.
+
+---
+
 ## ⌨️ Modo Vim
 
-O Vim agora tem sua própria aba nas **Configurações → Vim**.
-- Adicionada seção educativa sobre os benefícios do uso modal.
+O Vim tem sua própria aba nas **Configurações → Vim**.
 - Configuração de **vimrc integrado** para seus defaults.
 - Atalhos rápidos: \`:w\` salvar · \`:q\` fechar · \`:h\` ajuda.
 
 ## 🗓️ Nota Diária
 
-Clique no ícone de calendário na barra lateral para criar/abrir a nota do dia automaticamente.
+Clique no ícone de calendário na barra lateral para criar/abrir a nota do dia.
 Estrutura de pastas: \`ano > mês > dia\`
-
-## 📊 Métricas em Tempo Real
-
-Contador de palavras e caracteres visível no rodapé do editor.
-
-## 🗂️ Sistema de Abas
-
-Notas abertas ficam em abas persistentes entre sessões.
 
 ## 🔒 Criptografia E2E
 

@@ -34,7 +34,7 @@ function sortByOrder(folders, order) {
   })
 }
 
-export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
+export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLiveMemoryHistory }) {
   const store = useNotesStore()
   const { notes, folders, activeNoteId, createNote, createFolder, getAllTags, user, logout, openDailyNote, updateNote, deleteNote } = store
   
@@ -110,6 +110,7 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport }) {
         createFolder={createFolder}
         onImport={onImport}
         createNote={createNote}
+        onLiveMemoryHistory={onLiveMemoryHistory}
       />
 
       <FolderFilter 

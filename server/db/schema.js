@@ -8,6 +8,22 @@ async function pgExec(sql, label) {
 export async function createSchemaPg() {
   const pool = getPgPool()
 
+  // 0. Live memories table
+  await pgExec(`
+    CREATE TABLE IF NOT EXISTS live_memories (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      url        TEXT NOT NULL,
+      title      TEXT,
+      favicon    TEXT,
+      source     TEXT NOT NULL DEFAULT 'chrome-extension',
+      timestamp  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(user_id, url)
+    );
+    CREATE INDEX IF NOT EXISTS idx_live_memories_user ON live_memories(user_id);
+  `, 'live_memories table')
+
   // 1. Core tables
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -94,6 +110,21 @@ export async function createSchemaPg() {
 
 export function createSchemaSqlite() {
   const db = getSqlite()
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS live_memories (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL,
+      url        TEXT NOT NULL,
+      title      TEXT,
+      favicon    TEXT,
+      source     TEXT NOT NULL DEFAULT 'chrome-extension',
+      timestamp  TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, url)
+    );
+    CREATE INDEX IF NOT EXISTS idx_live_memories_user ON live_memories(user_id);
+  `)
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id         TEXT PRIMARY KEY,

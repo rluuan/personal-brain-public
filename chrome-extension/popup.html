@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Brain - Live Memory</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body {
+      width: 300px;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-size: 13px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #313244;
+      background: #161622;
+    }
+    .header-icon { font-size: 18px; }
+    .header-title { font-weight: 600; font-size: 14px; color: #cba6f7; }
+    .section { padding: 12px 16px; border-bottom: 1px solid #313244; }
+    .label { font-size: 11px; color: #a6adc8; margin-bottom: 4px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #45475a;
+      background: #252535;
+      color: #cdd6f4;
+      font-size: 12px;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: #89b4fa; }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .toggle-label { font-size: 12px; color: #cdd6f4; }
+    .toggle {
+      position: relative; display: inline-block; width: 36px; height: 20px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #45475a; border-radius: 20px; transition: 0.2s;
+    }
+    .slider:before {
+      position: absolute; content: "";
+      height: 14px; width: 14px; left: 3px; bottom: 3px;
+      background: white; border-radius: 50%; transition: 0.2s;
+    }
+    input:checked + .slider { background: #3b82f6; }
+    input:checked + .slider:before { transform: translateX(16px); }
+    .status-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 16px;
+      font-size: 11px; color: #a6adc8;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #45475a; flex-shrink: 0;
+    }
+    .dot.online { background: #a6e3a1; }
+    .dot.offline { background: #f38ba8; }
+    .btn {
+      width: calc(100% - 32px); margin: 8px 16px;
+      padding: 8px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 12px; font-weight: 600; transition: opacity 0.15s;
+    }
+    .btn-primary { background: #89b4fa; color: #1e1e2e; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-ghost {
+      background: transparent; color: #a6adc8;
+      border: 1px solid #45475a;
+    }
+    .btn-ghost:hover { background: #252535; }
+    .queue-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #f38ba8; color: #1e1e2e;
+      border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: 700;
+    }
+    .queue-badge.empty { background: #45475a; color: #a6adc8; }
+    .footer {
+      padding: 8px 16px;
+      text-align: center;
+      font-size: 10px;
+      color: #585b70;
+    }
+    .success { color: #a6e3a1; font-size: 11px; padding: 4px 16px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="header-icon">⬡</span>
+    <span class="header-title">Live Memory</span>
+  </div>
+
+  <div class="section">
+    <div class="label">URL do servidor Personal Brain</div>
+    <input type="text" id="apiUrl" placeholder="http://localhost:3001" />
+  </div>
+
+  <div class="section">
+    <div class="label">Seu nickname</div>
+    <input type="text" id="userId" placeholder="seu-nickname" />
+    <div style="font-size:10px;color:#585b70;margin-top:4px">O mesmo nickname usado no Personal Brain</div>
+  </div>
+
+  <div class="section">
+    <div class="toggle-row">
+      <span class="toggle-label">Captura automática ativa</span>
+      <label class="toggle">
+        <input type="checkbox" id="enabled" />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="status-row">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">Verificando conexão...</span>
+    <span style="margin-left:auto">
+      Fila: <span class="queue-badge" id="queueBadge">0</span>
+    </span>
+  </div>
+
+  <button class="btn btn-primary" id="saveBtn">Salvar configuração</button>
+  <button class="btn btn-ghost" id="flushBtn">Enviar fila agora</button>
+  <div class="success" id="successMsg" style="display:none">✓ Salvo com sucesso!</div>
+
+  <div class="footer">Personal Brain Live Memory v1.0</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
