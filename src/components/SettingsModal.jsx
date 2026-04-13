@@ -15,6 +15,7 @@ import { AITab } from './settings/tabs/AITab'
 import { DatabaseTab } from './settings/tabs/DatabaseTab'
 import { MemoryTab } from './settings/tabs/MemoryTab'
 import { ShortcutsTab } from './settings/tabs/ShortcutsTab'
+import { ClaudeMemoryTab } from './settings/tabs/ClaudeMemoryTab'
 
 export default function SettingsModal({ onClose, showNotification, revealInExplorer }) {
   const { 
@@ -37,6 +38,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
   const [ignoreNovidades, setIgnoreNovidades] = useState(settings.extra?.ignoreNovidades || false)
   const [screenKey, setScreenKey]     = useState(settings.extra?.screenKey || false)
   const [liveMemoryEnabled, setLiveMemoryEnabled] = useState(settings.extra?.liveMemoryEnabled !== false)
+  const [trackClaudeMemory, setTrackClaudeMemory] = useState(settings.extra?.trackClaudeMemory || false)
   const [backupFormat, setBackupFormat] = useState('json')
 
   const [saving, setSaving] = useState(false)
@@ -89,7 +91,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
         ...settings.extra, 
         projectName, aiModel, embedModel, 
         fontFamily, vimMode, vimrc, 
-        ignoreNovidades, screenKey, liveMemoryEnabled
+        ignoreNovidades, screenKey, liveMemoryEnabled, trackClaudeMemory
       }
     })
     document.body.style.fontFamily = `'${fontFamily}', sans-serif`
@@ -179,6 +181,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
     { id: 'ai',         label: 'IA',        icon: RefreshCw },
     { id: 'database',   label: 'Banco',     icon: Database },
     { id: 'memoria',    label: 'Memória',   icon: Brain },
+    { id: 'claude',     label: 'Claude',    icon: Brain },
     { id: 'shortcuts',  label: 'Atalhos',   icon: Keyboard },
   ]
 
@@ -226,7 +229,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
         {/* Scrollable Content */}
         <div className="overflow-y-auto flex-1 p-6 space-y-6 scrollbar-thin">
           {tab === 'general' && (
-            <GeneralTab 
+            <GeneralTab
               projectName={projectName} setProjectName={setProjectName}
               ignoreNovidades={ignoreNovidades} setIgnoreNovidades={setIgnoreNovidades}
               screenKey={screenKey} setScreenKey={setScreenKey}
@@ -283,6 +286,12 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
               handleExportNotes={handleExportNotes} 
               exporting={exporting} exportMsg={exportMsg}
               notes={notes} primary={primary}
+            />
+          )}
+          {tab === 'claude' && (
+            <ClaudeMemoryTab
+              trackClaudeMemory={trackClaudeMemory} setTrackClaudeMemory={setTrackClaudeMemory}
+              primary={primary}
             />
           )}
           {tab === 'shortcuts' && <ShortcutsTab primary={primary} />}

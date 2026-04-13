@@ -105,6 +105,20 @@ export async function createSchemaPg() {
     )
   }
 
+  await pgExec(`
+    CREATE TABLE IF NOT EXISTS claude_memory_nodes (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      project    TEXT NOT NULL,
+      summary    TEXT NOT NULL,
+      content    TEXT NOT NULL DEFAULT '',
+      tags       JSONB NOT NULL DEFAULT '[]',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_claude_memory_user    ON claude_memory_nodes(user_id);
+    CREATE INDEX IF NOT EXISTS idx_claude_memory_project ON claude_memory_nodes(project);
+  `, 'claude_memory_nodes table')
+
   console.log(`PostgreSQL schema OK (pgvector: ${pgvectorAvailable ? 'ativo' : 'inativo'})`)
 }
 
@@ -167,6 +181,20 @@ export function createSchemaSqlite() {
       extra           TEXT NOT NULL DEFAULT '{}',
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+  `)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS claude_memory_nodes (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL,
+      project    TEXT NOT NULL,
+      summary    TEXT NOT NULL,
+      content    TEXT NOT NULL DEFAULT '',
+      tags       TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_claude_memory_user    ON claude_memory_nodes(user_id);
+    CREATE INDEX IF NOT EXISTS idx_claude_memory_project ON claude_memory_nodes(project);
   `)
   console.log('SQLite schema OK')
 }

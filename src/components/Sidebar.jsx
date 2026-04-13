@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react'
-import { Sparkles } from 'lucide-react'
 import MetricsModal from './MetricsModal'
 import { useNotesStore } from '../store/useNotesStore'
 
@@ -9,7 +8,6 @@ import { FolderFilter } from './sidebar/FolderFilter'
 import { FolderItem } from './sidebar/FolderItem'
 import { NoteItem } from './sidebar/NoteItem'
 import { ScraperPanel } from './sidebar/ScraperPanel'
-import { RecentNotes } from './sidebar/RecentNotes'
 import { TagsSection } from './sidebar/TagsSection'
 import { SidebarFooter } from './sidebar/SidebarFooter'
 
@@ -170,26 +168,8 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
         )}
 
         <TagsSection tags={allTags} />
-        
-        <RecentNotes 
-          notes={notes} 
-          activeNoteId={activeNoteId} 
-          onSelect={store.setActiveNote} 
-        />
 
         <ScraperPanel folders={folders} onCreate={createNote} />
-      </div>
-
-      {/* Announcements */}
-      <div className="px-3 py-1.5 flex items-center justify-center" style={{ borderTop: '1px solid #313244' }}>
-        <button
-          onClick={openNovidades}
-          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium transition-colors hover:bg-ui-hover w-full justify-center"
-          style={{ color: 'var(--color-primary)', border: '1px solid rgba(203,166,247,0.2)' }}
-        >
-          <Sparkles size={10} />
-          Últimas Novidades
-        </button>
       </div>
 
       <SidebarFooter 

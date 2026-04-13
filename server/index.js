@@ -14,6 +14,7 @@ import exportRoutes  from './routes/export.js'
 import aiRoutes      from './routes/ai.js'
 import ragRoutes     from './routes/rag.js'
 import memoryRoutes  from './routes/memory.js'
+import claudeRoutes  from './routes/claude.js'
 
 const app = express()
 app.use(cors())
@@ -29,6 +30,7 @@ app.use('/api', exportRoutes)
 app.use('/api', aiRoutes)
 app.use('/api', ragRoutes)
 app.use('/api', memoryRoutes)
+app.use('/api', claudeRoutes)
 
 const PORT = process.env.PORT || 3001
 

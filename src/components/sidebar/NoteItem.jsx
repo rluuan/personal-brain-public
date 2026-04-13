@@ -1,14 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { FileText, EyeOff, Edit2, Trash2 } from 'lucide-react'
 
-export function NoteItem({ note, isActive, onSelect, onDelete, onRename }) {
+export function NoteItem({ note, isActive, onSelect, onDelete, onRename, autoEdit, onAutoEditDone }) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle]     = useState(note.title)
   const isHidden = localStorage.getItem(`personal-brain-hidden-${note.id}`) === '1'
-  
+  const didAutoEdit = useRef(false)
+
+  useEffect(() => {
+    if (autoEdit && !didAutoEdit.current) {
+      didAutoEdit.current = true
+      setEditing(true)
+    }
+  }, [autoEdit])
+
   const submit = () => {
     if (title.trim()) onRename(note.id, { title: title.trim() })
     setEditing(false)
+    onAutoEditDone?.()
   }
 
   return (
@@ -26,7 +35,7 @@ export function NoteItem({ note, isActive, onSelect, onDelete, onRename }) {
           onBlur={submit} 
           onKeyDown={(e) => { 
             if (e.key === 'Enter') submit()
-            if (e.key === 'Escape') setEditing(false) 
+            if (e.key === 'Escape') { setEditing(false); onAutoEditDone?.() }
           }}
           onClick={(e) => e.stopPropagation()}
           className="flex-1 bg-ui-panel border border-ui-accent rounded px-1 outline-none text-ui-text" 

@@ -24,6 +24,7 @@ import { createNotesSlice } from './slices/notesSlice'
 import { createFoldersSlice } from './slices/foldersSlice'
 import { createSettingsSlice } from './slices/settingsSlice'
 import { createLiveMemorySlice } from './slices/liveMemorySlice'
+import { createClaudeMemorySlice } from './slices/claudeMemorySlice'
 
 export const useNotesStore = create((set, get) => ({
   ...createUserSlice(set, get),
@@ -31,6 +32,7 @@ export const useNotesStore = create((set, get) => ({
   ...createFoldersSlice(set, get),
   ...createSettingsSlice(set, get),
   ...createLiveMemorySlice(set, get),
+  ...createClaudeMemorySlice(set, get),
 
   // ── Orchestration ──────────────────────────────────────────────────────
   load: async () => {
@@ -107,6 +109,13 @@ export const useNotesStore = create((set, get) => ({
 
     // Start SSE stream for live memories
     get().startLiveMemoryStream()
+
+    // Load Claude memory nodes if feature is enabled
+    if (settings.extra?.trackClaudeMemory) {
+      get().fetchClaudeNodes()
+      get().fetchClaudeProjects()
+      get().startClaudeStream()
+    }
   },
 
   // Called from App after first render — avoids race with Editor mount

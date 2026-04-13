@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Link } from 'lucide-react'
+import { Send, Link, Brain, ChevronDown } from 'lucide-react'
 import { useNotesStore } from '../store/useNotesStore'
 import { dbSearchLiveMemories } from '../db/database'
 
 const API = `http://${window.location.hostname}:3001`
 
 export default function ChatPanel() {
-  const { user } = useNotesStore()
+  const { user, settings, claudeProjects, claudeNodes, addClaudeNode,
+          fetchClaudeProjects, fetchClaudeNodes, syncClaudeProject } = useNotesStore()
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Vou te ajudar a encontrar textos que você anotou mas já esqueceu 🔍' },
   ])
@@ -15,12 +16,51 @@ export default function ChatPanel() {
   const [ragLiveMemory, setRagLiveMemory] = useState(false)
   const [streaming, setStreaming]   = useState(false)
   const [searching, setSearching]   = useState(false)
+
+  // Claude memory
+  const trackClaudeMemory = settings?.extra?.trackClaudeMemory
+  const [claudeProject, setClaudeProject] = useState('')
+  const [showProjectMenu, setShowProjectMenu] = useState(false)
+  const projectMenuRef = useRef(null)
+
   const endRef   = useRef(null)
   const inputRef = useRef(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Close project menu on outside click
+  useEffect(() => {
+    const handler = (e) => { if (projectMenuRef.current && !projectMenuRef.current.contains(e.target)) setShowProjectMenu(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Load claude projects + nodes when tracking is enabled
+  useEffect(() => {
+    if (!user || !trackClaudeMemory) return
+    const load = async () => {
+      await fetchClaudeProjects()
+      await fetchClaudeNodes()
+      const projects = useNotesStore.getState().claudeProjects || []
+      const nodes    = useNotesStore.getState().claudeNodes    || []
+      const synced   = new Set(nodes.map(n => n.project))
+      for (const p of projects.filter(p => !synced.has(p.name))) {
+        await syncClaudeProject(p.name)
+      }
+    }
+    load()
+  }, [user, trackClaudeMemory])
+
+  // Build claude memory context for selected project
+  const buildClaudeContext = () => {
+    if (!claudeProject || !claudeNodes?.length) return null
+    const nodes = claudeNodes.filter(n => n.project === claudeProject).slice(0, 20)
+    if (!nodes.length) return null
+    return `Memória do projeto "${claudeProject}" (Claude Code):\n` +
+      nodes.map(n => `- ${n.summary}`).join('\n')
+  }
 
   const sendMessage = async () => {
     if (!input.trim() || streaming) return
@@ -34,9 +74,9 @@ export default function ChatPanel() {
     setSearching(false)
     setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
-    const { settings } = useNotesStore.getState()
-    const ai_model    = settings.extra?.aiModel
-    const embed_model = settings.extra?.embedModel
+    const { settings: s } = useNotesStore.getState()
+    const ai_model    = s.extra?.aiModel
+    const embed_model = s.extra?.embedModel
 
     // Fetch live memory context if enabled
     let liveMemoryContext = null
@@ -48,6 +88,9 @@ export default function ChatPanel() {
         }
       } catch { /* ignore */ }
     }
+
+    // Claude memory context
+    const claudeMemoryContext = buildClaudeContext()
 
     try {
       const res = await fetch(`${API}/api/chat`, {
@@ -61,6 +104,7 @@ export default function ChatPanel() {
           ai_model,
           embed_model,
           live_memory_context: liveMemoryContext,
+          claude_memory_context: claudeMemoryContext,
         }),
       })
       if (!res.ok) throw new Error(`Servidor: ${res.statusText}`)
@@ -68,6 +112,7 @@ export default function ChatPanel() {
       const reader  = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
+      let finalResponse = ''
 
       while (true) {
         const { done, value } = await reader.read()
@@ -90,12 +135,10 @@ export default function ChatPanel() {
             } else if (evt.type === 'start') {
               setSearching(false)
             } else if (evt.type === 'token') {
+              finalResponse += evt.token
               setMessages(prev => {
                 const copy = [...prev]
-                copy[copy.length - 1] = {
-                  ...copy[copy.length - 1],
-                  content: copy[copy.length - 1].content + evt.token,
-                }
+                copy[copy.length - 1] = { ...copy[copy.length - 1], content: copy[copy.length - 1].content + evt.token }
                 return copy
               })
             } else if (evt.type === 'error') {
@@ -103,6 +146,16 @@ export default function ChatPanel() {
             }
           } catch { /* linha malformada */ }
         }
+      }
+
+      // Save interaction as Claude memory node if project selected
+      if (claudeProject && finalResponse && addClaudeNode) {
+        addClaudeNode({
+          project: claudeProject,
+          summary: userMsg.slice(0, 120),
+          content: JSON.stringify({ user: userMsg, assistant: finalResponse }),
+          tags: [],
+        })
       }
     } catch (err) {
       setMessages(prev => {
@@ -117,7 +170,7 @@ export default function ChatPanel() {
     }
   }
 
-  const noSource = !rag && !ragLiveMemory
+  const noSource = !rag && !ragLiveMemory && !claudeProject
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'rgba(14,14,26,0.4)' }}>
@@ -171,7 +224,7 @@ export default function ChatPanel() {
             <span className="mr-2 mt-1 text-ui-muted flex-shrink-0" style={{ fontSize: 16 }}>⬡</span>
             <div className="rounded-xl px-4 py-2.5 text-xs ai-pulse"
               style={{ background: 'rgba(37,37,53,0.5)', border: '1px solid #313244', color: '#89b4fa' }}>
-              🔍 Buscando{rag ? ' nas notas' : ''}{ragLiveMemory ? ' nos links' : ''}…
+              🔍 Buscando{rag ? ' nas notas' : ''}{ragLiveMemory ? ' nos links' : ''}{claudeProject ? ` em "${claudeProject}"` : ''}…
             </div>
           </div>
         )}
@@ -202,7 +255,7 @@ export default function ChatPanel() {
             }}
           />
           <div className="flex flex-col gap-1.5 flex-shrink-0">
-            {/* RAG notes toggle */}
+            {/* RAG notes */}
             <label
               className="flex items-center gap-1 text-[10px] cursor-pointer select-none transition-colors px-2 py-1 rounded-lg"
               style={{
@@ -216,7 +269,8 @@ export default function ChatPanel() {
               <input type="checkbox" checked={rag} onChange={e => setRag(e.target.checked)} className="accent-blue-400 w-3 h-3" />
               <span>Notas</span>
             </label>
-            {/* RAG live memory toggle */}
+
+            {/* RAG live memory */}
             <label
               className="flex items-center gap-1 text-[10px] cursor-pointer select-none transition-colors px-2 py-1 rounded-lg"
               style={{
@@ -231,6 +285,58 @@ export default function ChatPanel() {
               <Link size={9} />
               <span>Links</span>
             </label>
+
+            {/* Claude memory project selector */}
+            {trackClaudeMemory && (
+              <div className="relative" ref={projectMenuRef}>
+                <button
+                  onClick={() => setShowProjectMenu(v => !v)}
+                  className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg transition-colors w-full"
+                  style={{
+                    color: claudeProject ? '#c4b5fd' : '#585b70',
+                    background: claudeProject ? 'rgba(167,139,250,0.08)' : 'transparent',
+                    border: '1px solid',
+                    borderColor: claudeProject ? 'rgba(167,139,250,0.35)' : '#313244',
+                  }}
+                  title="Usar memória de um projeto Claude"
+                >
+                  <Brain size={9} />
+                  <span className="truncate max-w-[52px]">{claudeProject || 'Claude'}</span>
+                  <ChevronDown size={8} />
+                </button>
+
+                {showProjectMenu && (
+                  <div className="absolute bottom-full mb-1 right-0 z-50 rounded-lg overflow-hidden shadow-2xl"
+                    style={{ background: '#1a1a2e', border: '1px solid #a78bfa44', minWidth: 160 }}>
+                    <div className="px-3 py-1.5 text-[9px] uppercase font-semibold" style={{ color: '#6d5fa6', borderBottom: '1px solid #a78bfa22' }}>
+                      Projeto Claude
+                    </div>
+                    <button
+                      className="w-full text-left px-3 py-1.5 text-[10px] transition-colors"
+                      style={{ color: !claudeProject ? '#c4b5fd' : '#6d5fa6' }}
+                      onMouseOver={e => e.currentTarget.style.background = '#a78bfa11'}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                      onClick={() => { setClaudeProject(''); setShowProjectMenu(false) }}
+                    >
+                      Nenhum
+                    </button>
+                    {(claudeProjects || []).map(p => (
+                      <button
+                        key={p.name}
+                        className="w-full text-left px-3 py-1.5 text-[10px] transition-colors font-mono truncate"
+                        style={{ color: claudeProject === p.name ? '#c4b5fd' : '#9484c4' }}
+                        onMouseOver={e => e.currentTarget.style.background = '#a78bfa11'}
+                        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => { setClaudeProject(p.name); setShowProjectMenu(false) }}
+                      >
+                        {claudeProject === p.name ? '✓ ' : ''}{p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={sendMessage}
               disabled={streaming || !input.trim()}
@@ -248,7 +354,7 @@ export default function ChatPanel() {
         <div className="mt-1.5 text-ui-muted text-xs opacity-50">
           {noSource
             ? 'Sem contexto — conversa geral'
-            : `🔍 RAG: ${[rag && 'notas', ragLiveMemory && 'links'].filter(Boolean).join(' + ')}`
+            : `🔍 RAG: ${[rag && 'notas', ragLiveMemory && 'links', claudeProject && `Claude:${claudeProject}`].filter(Boolean).join(' + ')}`
           }
         </div>
       </div>

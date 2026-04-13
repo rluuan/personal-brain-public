@@ -32,7 +32,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const activeNote = getActiveNote()
   const vimMode = settings?.extra?.vimMode || false
 
-  const [mode, setMode] = useState('split')
+  const [mode, setMode] = useState(() => localStorage.getItem('editor-mode') || 'split')
   const [previewContent, setPreviewContent] = useState('')
   const [contentHidden, setContentHidden] = useState(false)
   const [noteFont, setNoteFont] = useState('Inter')
@@ -46,6 +46,8 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const saveTimeout = useRef(null)
   // Tracks latest content without triggering re-renders (used by diagram saves)
   const latestContentRef = useRef('')
+
+  useEffect(() => { localStorage.setItem('editor-mode', mode) }, [mode])
 
   // ── Sync Logic ────────────────────────────────────────────────────────────
   // Reset so sync re-runs when toggling vim mode (textarea remounts fresh)
@@ -157,6 +159,11 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const [wikiSuggest, setWikiSuggest] = useState(null)
 
   const applySuggestion = (title) => {
+    setWikiSuggest(null)
+    if (vimMode) {
+      vimEditorRef.current?.replaceWikiText(title)
+      return
+    }
     const ta = textareaRef.current
     if (!ta) return
     const cursor = ta.selectionStart
@@ -174,7 +181,6 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     ta.focus()
 
     setPreviewContent(newVal)
-    setWikiSuggest(null)
 
     clearTimeout(saveTimeout.current)
     saveTimeout.current = setTimeout(() => {
@@ -479,7 +485,22 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                   vimrc={settings?.extra?.vimrc || ''}
                   language={langExt}
                   onCloseTab={() => closeTab(activeNoteId)}
-                  onChange={(val) => { latestContentRef.current = val; setPreviewContent(val); if (activeNote) updateNote(activeNote.id, { content: val }) }}
+                  onChange={(val) => {
+                    latestContentRef.current = val
+                    setPreviewContent(val)
+                    if (activeNote) updateNote(activeNote.id, { content: val })
+                    const info = vimEditorRef.current?.getCursorAndDoc()
+                    if (info) {
+                      const query = getWikiQuery(info.doc, info.cursor)
+                      if (query !== null) {
+                        const q = query.toLowerCase()
+                        const items = notes.filter(n => n.id !== activeNote?.id && n.title.toLowerCase().includes(q)).slice(0, 6)
+                        setWikiSuggest({ query, items, selectedIdx: 0 })
+                      } else {
+                        setWikiSuggest(null)
+                      }
+                    }
+                  }}
                   onSave={(val) => { if (activeNote) updateNote(activeNote.id, { content: val }) }}
                 />
               ) : (

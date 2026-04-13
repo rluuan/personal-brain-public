@@ -43,16 +43,56 @@ Personal Brain é uma aplicação desktop (Electron) + web para gestão de conhe
 | 📝 **Editor Markdown** | Auto-save, preview em tempo real, Split/Preview/Edit |
 | ⌨️ **Modo Vim** | CodeMirror 6 + vim keybindings completos (NORMAL/INSERT/VISUAL/REPLACE, `:w`, `:set number`, etc.) |
 | 🔗 **Wiki-links** | `[[Nome da Nota]]` com autocomplete e navegação por clique |
-| 🕸️ **Grafo interativo** | Canvas force-directed com todos os backlinks |
+| 🕸️ **Grafo interativo** | Canvas force-directed agrupado por pasta raiz, com backlinks entre notas |
 | 💬 **Chat com RAG** | Pergunta sobre suas notas — a IA busca os trechos relevantes e responde com contexto real |
 | 🪄 **Formatação por IA** | Cole um texto bruto, a IA formata em Markdown automaticamente (seleção ou nota inteira) |
 | 📊 **Diagramas inline** | Blocos ` ```diagram ``` ` renderizados em canvas customizado |
+| ✏️ **Excalidraw** | Blocos ` ```excalidraw ``` ` com editor vetorial completo embutido |
 | 🗓️ **Nota Diária** | Cria/abre a nota do dia automaticamente em `ano > mês > dia` |
 | 🗂️ **Abas** | Notas em abas persistentes, fecháveis com Ctrl+W |
 | 🔒 **Criptografia E2E** | AES-256/PBKDF2 no cliente — servidor só armazena ciphertext |
 | 🔍 **Busca global** | Ctrl+K para busca instantânea — inclui notas e links do Live Memory |
-| 🎙️ **Transcrição por voz** | Microfone → texto direto no editor (requer HTTPS ou localhost) |
+| 🎙️ **Transcrição por voz** | Microfone → texto direto no editor (funciona no Electron e em localhost) |
 | 🔗 **Live Memory** | Extensão Chrome captura automaticamente links visitados e os integra ao grafo, busca e chat com RAG |
+| 🤖 **Claude Memory** | Visualiza sessões e subagentes do Claude Code como nós no grafo. Injeta memória de projetos no chat. |
+
+---
+
+## Claude Memory
+
+A funcionalidade **Claude Memory** conecta o Personal Brain às conversas do [Claude Code](https://claude.ai/code). Ative em **Configurações → Claude**.
+
+### Como funciona
+
+O Claude Code salva cada conversa em `~/.claude/projects/{projeto}/`. O Personal Brain lê esses arquivos e cria nós no grafo para cada interação relevante.
+
+### Tipos de nós
+
+| Tipo | O que representa |
+|---|---|
+| 📋 **Memória** | O arquivo `MEMORY.md` do projeto — contexto persistente carregado em toda conversa |
+| 💬 **Sessão** | Uma conversa completa. Só aparece se tiver **2 ou mais trocas** |
+| ⚡ **Subagente** | Uma tarefa delegada pelo Claude a um agente especializado (Explore, Plan, etc.) |
+
+### Ligações entre nós
+
+| Ligação | Significado |
+|---|---|
+| `memory → sessão` | A memória do projeto se conecta a todas as sessões — contexto compartilhado |
+| `sessão → subagente` | Uma sessão se conecta aos subagentes que ela disparou |
+
+### Filtros no grafo
+
+Tanto o **Grafo** (embutido no editor) quanto o **Grafo full** têm filtros persistentes:
+- **Notas** — suas notas markdown (padrão: ativado)
+- **Links** — Live Memory (links visitados)
+- **Claude** — sessões e subagentes do Claude Code
+
+O estado dos filtros é salvo no localStorage e restaurado ao recarregar.
+
+### Privacidade
+
+Nenhum caminho absoluto do sistema operacional é exposto ao frontend. O servidor converte internamente o caminho codificado da pasta (`drive--Users-...`) para apenas o nome do projeto.
 
 ---
 

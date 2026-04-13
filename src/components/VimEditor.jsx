@@ -134,6 +134,27 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
       view.dispatch({ changes: { from, insert: text }, selection: { anchor: from + text.length } })
       view.focus()
     },
+    // Replace [[partial with [[Title]] — used by wiki autocomplete
+    replaceWikiText: (title) => {
+      const view = viewRef.current
+      if (!view) return
+      const { from } = view.state.selection.main
+      const docText = view.state.doc.toString()
+      const before = docText.slice(0, from)
+      const openIdx = before.lastIndexOf('[[')
+      if (openIdx === -1) return
+      const replacement = `[[${title}]]`
+      view.dispatch({
+        changes: { from: openIdx, to: from, insert: replacement },
+        selection: { anchor: openIdx + replacement.length },
+      })
+      view.focus()
+    },
+    getCursorAndDoc: () => {
+      const view = viewRef.current
+      if (!view) return null
+      return { cursor: view.state.selection.main.from, doc: view.state.doc.toString() }
+    },
   }))
 
   // Parse vimrc and apply options directly to CodeMirror compartments.

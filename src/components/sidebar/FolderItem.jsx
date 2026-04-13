@@ -3,10 +3,12 @@ import { ChevronDown, ChevronRight, Folder, FolderOpen, FilePlus, Upload, Folder
 import { NoteItem } from './NoteItem'
 
 export function FolderItem({ folder, notes, subfolders, allFolders, activeNoteId, depth = 0, store, onImport }) {
-  const [open, setOpen]       = useState(true)
-  const [editing, setEditing] = useState(false)
-  const [name, setName]       = useState(folder.name)
-  const folderNotes = notes.filter((n) => n.folder_id === folder.id)
+  const [open, setOpen]             = useState(true)
+  const [editing, setEditing]       = useState(false)
+  const [name, setName]             = useState(folder.name)
+  const [pendingRenameId, setPendingRenameId] = useState(null)
+  const folderNotes = [...notes.filter((n) => n.folder_id === folder.id)]
+    .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR', { sensitivity: 'base' }))
   
   const submit = () => { 
     if (name.trim()) store.renameFolder(folder.id, name.trim())
@@ -38,7 +40,7 @@ export function FolderItem({ folder, notes, subfolders, allFolders, activeNoteId
           <span className="text-ui-muted text-[10px]">{folderNotes.length}</span>
         </button>
         <div className="hidden group-hover:flex items-center gap-0.5">
-          <button onClick={(e) => { e.stopPropagation(); store.createNote('Sem Título', folder.id) }} className="p-0.5 rounded hover:text-ui-green transition-colors text-ui-muted" title="Nova nota"><FilePlus size={10} /></button>
+          <button onClick={async (e) => { e.stopPropagation(); const id = await store.createNote('Sem Título', folder.id); setOpen(true); setPendingRenameId(id) }} className="p-0.5 rounded hover:text-ui-green transition-colors text-ui-muted" title="Nova nota"><FilePlus size={10} /></button>
           <button onClick={(e) => { e.stopPropagation(); onImport(folder.id) }} className="p-0.5 rounded hover:text-ui-blue transition-colors text-ui-muted" title="Importar"><Upload size={10} /></button>
           <button onClick={(e) => { e.stopPropagation(); store.createFolder('Nova Pasta', folder.id) }} className="p-0.5 rounded hover:text-ui-yellow transition-colors text-ui-muted" title="Nova subpasta"><FolderPlus size={10} /></button>
           <button onClick={(e) => { e.stopPropagation(); setEditing(true) }} className="p-0.5 rounded hover:text-ui-accent transition-colors text-ui-muted" title="Renomear"><Edit2 size={10} /></button>
@@ -62,12 +64,14 @@ export function FolderItem({ folder, notes, subfolders, allFolders, activeNoteId
           ))}
           {folderNotes.map((note) => (
             <div key={note.id} style={{ paddingLeft: (depth + 1) * 10 + 4 }}>
-              <NoteItem 
-                note={note} 
-                isActive={note.id === activeNoteId} 
-                onSelect={store.setActiveNote} 
-                onDelete={store.deleteNote} 
-                onRename={store.updateNote} // Note: previously it was onRename={store.renameNote} but in slice it's updateNote
+              <NoteItem
+                note={note}
+                isActive={note.id === activeNoteId}
+                onSelect={store.setActiveNote}
+                onDelete={store.deleteNote}
+                onRename={store.updateNote}
+                autoEdit={note.id === pendingRenameId}
+                onAutoEditDone={() => setPendingRenameId(null)}
               />
             </div>
           ))}

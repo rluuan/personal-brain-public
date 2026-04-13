@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, session } from 'electron'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
@@ -70,6 +70,11 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') return callback(true)
+    callback(false)
+  })
+
   const win = createWindow()
 
   if (app.isPackaged) {
