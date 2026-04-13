@@ -192,6 +192,18 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     const ta = textareaRef.current
     if (!ta || !activeNote) return
 
+    try {
+      const statusRes = await fetch(`http://${window.location.hostname}:3001/api/ollama/status`)
+      const statusData = await statusRes.json()
+      if (!statusData.ok) {
+        showNotification('🤖 Ollama não encontrado. Instale em ollama.com e rode: ollama pull gemma3:12b', 'error')
+        return
+      }
+    } catch {
+      showNotification('🤖 Ollama não encontrado. Instale em ollama.com e rode: ollama pull gemma3:12b', 'error')
+      return
+    }
+
     const selStart = ta.selectionStart
     const selEnd   = ta.selectionEnd
     const hasSelection = selStart !== selEnd
@@ -452,7 +464,13 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
           onExport={handleExport}
           onAiFormat={handleAiFormat}
           onToggleHide={toggleHide}
-          onToggleSpeech={() => setShowSpeech(true)}
+          onToggleSpeech={() => {
+            if (window.updater) {
+              showNotification('🎙️ Transcrição por voz só funciona no app web (localhost:5173). No Electron, o acesso à API de fala do Google é bloqueado.', 'info')
+              return
+            }
+            setShowSpeech(true)
+          }}
           aiStatus={aiStatus}
           aiProgress={aiProgress}
           aiTranslate={aiTranslate}
