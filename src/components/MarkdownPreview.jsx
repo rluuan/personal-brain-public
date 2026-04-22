@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react'
+import React, { useMemo, useRef, useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -19,22 +19,69 @@ function extractHastText(node) {
   return ''
 }
 
-// Process wiki links [[Title]] and #tags in content before rendering
+// Process wiki links [[Title]], #tags, and [text]{#color} in content before rendering
 function processContent(content, notes) {
   return content
     .replace(/\[\[([^\]]+)\]\]/g, (_, title) => {
       const exists = notes.find((n) => n.title.toLowerCase() === title.toLowerCase())
       return `[${title}](wikilink:${encodeURIComponent(title)}${exists ? '' : '?broken'})`
     })
+    .replace(/\[([^\]]+)\]\{(#[0-9a-fA-F]{3,6})\}/g, (_, text, color) => `[${text}](colortext:${color.slice(1)})`)
     .replace(/#(\w+)/g, (_, tag) => `[\`#${tag}\`](tag:${tag})`)
     // Force hard line breaks: add two trailing spaces before newlines that follow a markdown link
     .replace(/(\]\([^)]+\)) *\n/g, '$1  \n')
 }
 
-export default function MarkdownPreview({ content, filename = '', onDiagramUpdate }) {
+function ResizableImage({ src, alt, initialWidth, onResize }) {
+  const [width, setWidth] = useState(initialWidth || null)
+
+  const onMouseDown = (e) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = width || 400
+
+    const onMouseMove = (moveE) => {
+      const newW = Math.max(50, startW + (moveE.clientX - startX))
+      setWidth(newW)
+    }
+    const onMouseUp = (upE) => {
+      const newW = Math.max(50, startW + (upE.clientX - startX))
+      setWidth(newW)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+      onResize?.(Math.round(newW))
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  return (
+    <span
+      style={{ display: 'inline-block', position: 'relative', width: width ? `${width}px` : 'auto', maxWidth: '100%' }}
+      className="group/img"
+    >
+      <img src={src} alt={alt} style={{ width: '100%', display: 'block', borderRadius: 4 }} />
+      <span
+        style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0, width: 8,
+          background: 'rgba(203,166,247,0.5)', cursor: 'ew-resize',
+          opacity: 0, transition: 'opacity 0.15s',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0' }}
+        onMouseDown={onMouseDown}
+        title="Arrastar para redimensionar"
+      />
+    </span>
+  )
+}
+
+export default function MarkdownPreview({ content, filename = '', onDiagramUpdate, onImageResize }) {
   const { notes, setActiveNote, getNoteByTitle, createNote } = useNotesStore()
   const onDiagramUpdateRef = useRef(onDiagramUpdate)
   useEffect(() => { onDiagramUpdateRef.current = onDiagramUpdate }, [onDiagramUpdate])
+  const onImageResizeRef = useRef(onImageResize)
+  useEffect(() => { onImageResizeRef.current = onImageResize }, [onImageResize])
 
   const { isMarkdown, alias } = getLanguageMetadata(filename)
 
@@ -62,7 +109,24 @@ export default function MarkdownPreview({ content, filename = '', onDiagramUpdat
         )
       }
       if (href?.startsWith('tag:')) return <span className="tag-pill">{children}</span>
+      if (href?.startsWith('colortext:')) {
+        return <span style={{ color: '#' + href.replace('colortext:', '') }}>{children}</span>
+      }
       return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+    },
+    img: ({ src, alt }) => {
+      const widthMatch = alt?.match(/\|w=(\d+)/)
+      const initW = widthMatch ? parseInt(widthMatch[1]) : undefined
+      const displayAlt = alt?.replace(/\|w=\d+/, '').trim()
+      return (
+        <ResizableImage
+          key={`${alt}-${initW}`}
+          src={src}
+          alt={displayAlt || ''}
+          initialWidth={initW}
+          onResize={(newW) => onImageResizeRef.current?.(alt, newW)}
+        />
+      )
     },
     code: ({ className, children, node }) => {
       const match = /language-(\w+)/.exec(className || '')
@@ -103,6 +167,7 @@ export default function MarkdownPreview({ content, filename = '', onDiagramUpdat
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[[rehypeHighlight, { ignoreMissing: true }]]}
+        urlTransform={(url) => url}
         components={components}
       >
         {processed}

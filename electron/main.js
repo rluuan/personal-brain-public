@@ -66,6 +66,16 @@ function createWindow() {
     return { action: 'deny' }
   })
 
+  // Bloquear navegação fora do app (ex: clique em links wikilink: ou externos)
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('http://localhost:3001')) {
+      event.preventDefault()
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        shell.openExternal(url)
+      }
+    }
+  })
+
   return win
 }
 

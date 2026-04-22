@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FileText, EyeOff, Edit2, Trash2 } from 'lucide-react'
 
+function getNoteExt(title = '') {
+  const dot = title.lastIndexOf('.')
+  if (dot > 0 && dot < title.length - 1) return title.slice(dot)
+  return '.md'
+}
+
 export function NoteItem({ note, isActive, onSelect, onDelete, onRename, autoEdit, onAutoEditDone }) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle]     = useState(note.title)
@@ -42,7 +48,9 @@ export function NoteItem({ note, isActive, onSelect, onDelete, onRename, autoEdi
           style={{ minWidth: 0 }} 
         />
       ) : (
-        <span className="flex-1 truncate">{note.title}</span>
+        <><span className="flex-1 truncate">{note.title}</span>
+        <span style={{ fontSize: 9, color: '#6c7086', fontFamily: 'monospace', flexShrink: 0 }}>{getNoteExt(note.title)}</span></>
+
       )}
       {isHidden && <EyeOff size={10} className="flex-shrink-0 opacity-40" title="Nota oculta" />}
       <div className="hidden group-hover:flex items-center gap-0.5">

@@ -22,6 +22,31 @@ import { SpeechBrain } from './SpeechBrain'
 const noteFontKey = (id) => `personal-brain-note-font-${id}`
 const noteHideKey = (id) => `personal-brain-hidden-${id}`
 
+// Returns approximate caret {x, y} screen coordinates for a textarea
+function getCaretCoordinates(textarea, cursorPos) {
+  const style = window.getComputedStyle(textarea)
+  const mirror = document.createElement('div')
+  ;['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing',
+    'paddingTop','paddingLeft','paddingRight','paddingBottom',
+    'borderTopWidth','borderLeftWidth','boxSizing','wordWrap','whiteSpace','overflowWrap',
+  ].forEach(p => { mirror.style[p] = style[p] })
+  mirror.style.position = 'absolute'
+  mirror.style.top = '-9999px'
+  mirror.style.left = '-9999px'
+  mirror.style.width = `${textarea.offsetWidth}px`
+  mirror.style.overflow = 'hidden'
+  document.body.appendChild(mirror)
+  mirror.textContent = textarea.value.slice(0, cursorPos)
+  const span = document.createElement('span')
+  span.textContent = '.'
+  mirror.appendChild(span)
+  const taRect = textarea.getBoundingClientRect()
+  const x = taRect.left + span.offsetLeft - textarea.scrollLeft
+  const y = taRect.top + span.offsetTop - textarea.scrollTop + span.offsetHeight
+  document.body.removeChild(mirror)
+  return { x, y }
+}
+
 export default function Editor({ onImport, showNotification, revealInExplorer }) {
   const { 
     getActiveNote, updateNote, notes, openTabs, 
@@ -59,13 +84,13 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     if (activeNote.id !== lastNoteId.current) {
       lastNoteId.current = activeNote.id
       latestContentRef.current = val
-      if (textareaRef.current) textareaRef.current.value = collapseAllDiagrams(val)
+      if (textareaRef.current) textareaRef.current.value = collapseImages(collapseAllDiagrams(val))
       setPreviewContent(val)
       setContentHidden(localStorage.getItem(noteHideKey(activeNote.id)) === '1')
       setNoteFont(localStorage.getItem(noteFontKey(activeNote.id)) || 'Inter')
     } else if (textareaRef.current && textareaRef.current.value !== val) {
       latestContentRef.current = val
-      textareaRef.current.value = collapseAllDiagrams(val)
+      textareaRef.current.value = collapseImages(collapseAllDiagrams(val))
       setPreviewContent(val)
     }
   }, [activeNote?.id, activeNote?.content, vimMode, mode])
@@ -98,7 +123,12 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     const newVal = textarea.value.replace(FOLD_PLACEHOLDER(id), original)
     foldedDiagramsRef.current.delete(id)
     textarea.value = newVal
-    latestContentRef.current = textarea.value
+    // Restore image placeholders too so latestContentRef has full content
+    let fullContent = newVal
+    for (const [altId, dataUrl] of foldedImagesRef.current) {
+      fullContent = fullContent.replace(IMAGE_PLACEHOLDER(altId), `![${altId}](${dataUrl})`)
+    }
+    latestContentRef.current = fullContent
   }, [])
 
   // Collapse a single diagram back
@@ -117,7 +147,11 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const aiAbortRef = useRef(null)
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleTabKey = (e) => {
+  const handleEditorKeyDown = (e) => {
+    // WikiSuggest keyboard navigation (textarea mode)
+    if (['ArrowDown','ArrowUp','Enter','Escape'].includes(e.key)) {
+      if (wikiKeyHandlerRef.current?.(e.key)) { e.preventDefault(); return }
+    }
     if (e.key !== 'Tab') return
     e.preventDefault()
     const ta    = e.target
@@ -132,9 +166,12 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const handleChange = (e) => {
     let content = e.target.value
     const cursor  = e.target.selectionStart
-    // Restore collapsed diagram placeholders to full JSON before saving/previewing
+    // Restore collapsed placeholders before saving/previewing
     for (const [id, originalBlock] of foldedDiagramsRef.current) {
       content = content.replace(FOLD_PLACEHOLDER(id), originalBlock)
+    }
+    for (const [altId, dataUrl] of foldedImagesRef.current) {
+      content = content.replace(IMAGE_PLACEHOLDER(altId), `![${altId}](${dataUrl})`)
     }
     latestContentRef.current = content
     setPreviewContent(content)
@@ -150,7 +187,8 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
       const items = notes
         .filter((n) => n.id !== activeNote?.id && n.title.toLowerCase().includes(q))
         .slice(0, 6)
-      setWikiSuggest({ query, items, selectedIdx: 0 })
+      const coords = getCaretCoordinates(e.target, cursor)
+      setWikiSuggest({ query, items, selectedIdx: 0, x: coords.x, y: coords.y })
     } else {
       setWikiSuggest(null)
     }
@@ -331,6 +369,130 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     setInterimSpeech(interim || '')
   }
 
+  // ── Wiki suggest refs ─────────────────────────────────────────────────────
+  const wikiSuggestRef    = useRef(null)
+  const wikiKeyHandlerRef = useRef(null)
+
+  // Keeps wikiSuggestRef in sync so the key handler sees latest state
+  useEffect(() => { wikiSuggestRef.current = wikiSuggest }, [wikiSuggest])
+
+  // Set once — checked by VimEditor keymap and handleEditorKeyDown
+  useEffect(() => {
+    wikiKeyHandlerRef.current = (key) => {
+      const ws = wikiSuggestRef.current
+      if (!ws || ws.items.length === 0) return false
+      if (key === 'ArrowDown') { setWikiSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx + 1) % prev.items.length })); return true }
+      if (key === 'ArrowUp')   { setWikiSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx - 1 + prev.items.length) % prev.items.length })); return true }
+      if (key === 'Enter')     { const item = ws.items[ws.selectedIdx]; if (item) applySuggestion(item.title); return true }
+      if (key === 'Escape')    { setWikiSuggest(null); return true }
+      return false
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Image fold helpers ─────────────────────────────────────────────────────
+  const foldedImagesRef = useRef(new Map())
+  const IMAGE_PLACEHOLDER = (altId) => `![${altId}](img:collapsed)`
+
+  const collapseImages = useCallback((raw) => {
+    const map = new Map()
+    const display = raw.replace(/!\[([^\]]*)\]\((data:[^)]+)\)/g, (_, alt, dataUrl) => {
+      const key = alt || 'img'
+      map.set(key, dataUrl)
+      return IMAGE_PLACEHOLDER(key)
+    })
+    foldedImagesRef.current = map
+    return display
+  }, [])
+
+  const imageInputRef = useRef(null)
+
+  const handleInsertImage = () => {
+    imageInputRef.current?.click()
+  }
+
+  const handleImageFileChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    const altId = `img-${Date.now()}`
+    const ext = file.name.split('.').pop() || 'jpg'
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target.result
+      let finalUrl = dataUrl // fallback inline
+
+      try {
+        const res = await fetch(`http://${window.location.hostname}:3001/api/images`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl, filename: `${altId}.${ext}` }),
+        })
+        if (res.ok) {
+          const { url } = await res.json()
+          finalUrl = `http://${window.location.hostname}:3001${url}`
+        }
+      } catch { /* usa dataUrl inline */ }
+
+      const fullMd = `\n![${altId}](${finalUrl})\n`
+      const newContent = latestContentRef.current + fullMd
+      latestContentRef.current = newContent
+      setPreviewContent(newContent)
+
+      if (vimMode) {
+        vimEditorRef.current?.insertText(fullMd)
+      } else if (textareaRef.current) {
+        textareaRef.current.value += fullMd
+      }
+
+      clearTimeout(saveTimeout.current)
+      saveTimeout.current = setTimeout(() => {
+        if (activeNote) updateNote(activeNote.id, { content: newContent })
+      }, 300)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleImageResize = (altText, newWidth) => {
+    const baseAlt = altText.replace(/\|w=\d+/, '').trim()
+    const newAlt = `${baseAlt}|w=${newWidth}`
+    const escaped = altText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const content = latestContentRef.current
+    const newContent = content.replace(
+      new RegExp(`!\\[${escaped}\\]\\(([^)]+)\\)`),
+      `![${newAlt}]($1)`
+    )
+    latestContentRef.current = newContent
+    setPreviewContent(newContent)
+    if (textareaRef.current) textareaRef.current.value = collapseImages(collapseAllDiagrams(newContent))
+    clearTimeout(saveTimeout.current)
+    saveTimeout.current = setTimeout(() => {
+      if (activeNote) updateNote(activeNote.id, { content: newContent })
+    }, 300)
+  }
+
+  const insertColor = (color) => {
+    if (vimMode) {
+      vimEditorRef.current?.insertText(`[]{${color}}`)
+      return
+    }
+    const ta = textareaRef.current
+    if (!ta) return
+    ta.focus()
+    const start = ta.selectionStart
+    const end = ta.selectionEnd
+    const selected = ta.value.slice(start, end)
+    document.execCommand('insertText', false, `[${selected}]{${color}}`)
+    if (!selected) {
+      const pos = ta.selectionStart - `]{${color}}`.length - 1
+      ta.setSelectionRange(pos, pos)
+    }
+    setPreviewContent(ta.value)
+    clearTimeout(saveTimeout.current)
+    saveTimeout.current = setTimeout(() => {
+      if (activeNote) updateNote(activeNote.id, { content: ta.value })
+    }, 300)
+  }
+
   const toggleHide = () => {
     const next = !contentHidden
     localStorage.setItem(noteHideKey(activeNote.id), next ? '1' : '0')
@@ -480,8 +642,17 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
           noteFont={noteFont}
           onNoteFontChange={changeNoteFont}
           onInsertDiagram={insertDiagram}
+          onInsertImage={handleInsertImage}
+          onInsertColor={insertColor}
         />
       )}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImageFileChange}
+      />
 
       {contentHidden ? (
         <div className="flex-1 flex items-center justify-center">
@@ -502,18 +673,24 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                   font={noteFont}
                   vimrc={settings?.extra?.vimrc || ''}
                   language={langExt}
+                  wikiKeyHandlerRef={wikiKeyHandlerRef}
                   onCloseTab={() => closeTab(activeNoteId)}
                   onChange={(val) => {
-                    latestContentRef.current = val
-                    setPreviewContent(val)
-                    if (activeNote) updateNote(activeNote.id, { content: val })
+                    let fullVal = val
+                    for (const [id, url] of foldedImagesRef.current) {
+                      fullVal = fullVal.replace(IMAGE_PLACEHOLDER(id), `![${id}](${url})`)
+                    }
+                    latestContentRef.current = fullVal
+                    setPreviewContent(fullVal)
+                    if (activeNote) updateNote(activeNote.id, { content: fullVal })
                     const info = vimEditorRef.current?.getCursorAndDoc()
                     if (info) {
                       const query = getWikiQuery(info.doc, info.cursor)
                       if (query !== null) {
                         const q = query.toLowerCase()
                         const items = notes.filter(n => n.id !== activeNote?.id && n.title.toLowerCase().includes(q)).slice(0, 6)
-                        setWikiSuggest({ query, items, selectedIdx: 0 })
+                        const coords = vimEditorRef.current?.getCursorPosition?.() || {}
+                        setWikiSuggest({ query, items, selectedIdx: 0, ...coords })
                       } else {
                         setWikiSuggest(null)
                       }
@@ -527,7 +704,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                   className="editor-textarea"
                   defaultValue={previewContent}
                   onChange={handleChange}
-                  onKeyDown={handleTabKey}
+                  onKeyDown={handleEditorKeyDown}
                   onClick={(e) => {
                     const ta = e.target
                     const lineIndex = ta.value.slice(0, ta.selectionStart).split('\n').length - 1
@@ -539,7 +716,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                   style={{ fontFamily: `'${noteFont}', sans-serif` }}
                 />
               )}
-              <WikiSuggest suggest={wikiSuggest} onApply={applySuggestion} />
+              <WikiSuggest suggest={wikiSuggest} onApply={applySuggestion} onClose={() => setWikiSuggest(null)} />
             </div>
           )}
 
@@ -551,9 +728,10 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
           {showPreview && (
             <div className="flex flex-col overflow-hidden relative" style={{ width: `${previewPct}%`, flexShrink: 0 }}>
               <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-                <MarkdownPreview 
-                  content={previewContent + (interimSpeech ? ` _${interimSpeech}_` : '')} 
+                <MarkdownPreview
+                  content={previewContent + (interimSpeech ? ` _${interimSpeech}_` : '')}
                   filename={activeNote?.title}
+                  onImageResize={handleImageResize}
                   onDiagramUpdate={(diagramId, newJson) => {
                     // Replace diagram block by _id — avoids stale codeValue after first save
                     const newVal = latestContentRef.current.replace(

@@ -1,6 +1,12 @@
 import React, { useState } from 'react'
 import { ChevronDown, ChevronRight, Clock, FileText } from 'lucide-react'
 
+function getNoteExt(title = '') {
+  const dot = title.lastIndexOf('.')
+  if (dot > 0 && dot < title.length - 1) return title.slice(dot)
+  return '.md'
+}
+
 export function RecentNotes({ notes, activeNoteId, onSelect }) {
   const [open, setOpen] = useState(true)
 
@@ -40,6 +46,7 @@ export function RecentNotes({ notes, activeNoteId, onSelect }) {
               <div className="flex items-center gap-1.5 min-w-0">
                 <FileText size={10} className="flex-shrink-0 text-ui-muted" />
                 <span className="truncate">{note.title}</span>
+                <span style={{ fontSize: 9, color: '#45475a', fontFamily: 'monospace', flexShrink: 0 }}>{getNoteExt(note.title)}</span>
               </div>
               <span className="text-[10px] text-ui-muted flex-shrink-0">{timeAgo(note.updated_at)}</span>
             </div>

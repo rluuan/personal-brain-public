@@ -214,7 +214,10 @@ export default function App() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
 
-  const [sidebarWidth, setSidebarWidth] = useState(420)
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem('personal-brain-sidebar-width')
+    return saved ? Math.max(160, parseInt(saved)) : 280
+  })
   const dragging = useRef(false)
   const startX   = useRef(0)
   const startW   = useRef(0)
@@ -279,12 +282,15 @@ export default function App() {
     const onMove = (e) => {
       if (!dragging.current) return
       const delta = e.clientX - startX.current
-      setSidebarWidth(Math.max(160, Math.min(420, startW.current + delta)))
+      setSidebarWidth(Math.max(160, startW.current + delta))
     }
-    const onUp = () => {
+    const onUp = (e) => {
+      if (!dragging.current) return
       dragging.current = false
       document.body.style.cursor    = ''
       document.body.style.userSelect = ''
+      const finalW = Math.max(160, startW.current + (e.clientX - startX.current))
+      localStorage.setItem('personal-brain-sidebar-width', String(finalW))
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)

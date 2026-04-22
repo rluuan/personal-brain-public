@@ -107,7 +107,7 @@ function initVimOptions() {
   Vim.defineOption('incsearch',     false,  'boolean', ['is'],  noop)
 }
 
-const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language }, ref) {
+const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language, wikiKeyHandlerRef }, ref) {
   const containerRef  = useRef(null)
   const viewRef       = useRef(null)
   const lastValueRef  = useRef(value)
@@ -154,6 +154,14 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
       const view = viewRef.current
       if (!view) return null
       return { cursor: view.state.selection.main.from, doc: view.state.doc.toString() }
+    },
+    getCursorPosition: () => {
+      const view = viewRef.current
+      if (!view) return null
+      const cursorEl = view.dom.querySelector('.cm-cursor')
+      if (!cursorEl) return null
+      const rect = cursorEl.getBoundingClientRect()
+      return { x: rect.left, y: rect.bottom + 4 }
     },
   }))
 
@@ -238,6 +246,14 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
         // ── GOVERNANCE ──
         // vim() must come first; no Prec wrapper — it handles its own event priority
         vim(),
+
+        // Wiki suggest keyboard interception — only active when wikiKeyHandlerRef.current is set
+        keymap.of([
+          { key: 'ArrowDown', run: () => { if (wikiKeyHandlerRef?.current?.('ArrowDown')) return true; return false } },
+          { key: 'ArrowUp',   run: () => { if (wikiKeyHandlerRef?.current?.('ArrowUp'))   return true; return false } },
+          { key: 'Enter',     run: () => { if (wikiKeyHandlerRef?.current?.('Enter'))     return true; return false } },
+          { key: 'Escape',    run: () => { if (wikiKeyHandlerRef?.current?.('Escape'))    return true; return false } },
+        ]),
 
         // Tab indentation
         keymap.of([indentWithTab]),

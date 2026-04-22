@@ -6,6 +6,7 @@ import { initDb } from './db/schema.js'
 
 // Route modules
 import configRoutes  from './routes/config.js'
+import { imageRoutes, getImagesDir } from './routes/images.js'
 import userRoutes    from './routes/users.js'
 import noteRoutes    from './routes/notes.js'
 import folderRoutes  from './routes/folders.js'
@@ -18,10 +19,12 @@ import claudeRoutes  from './routes/claude.js'
 
 const app = express()
 app.use(cors())
-app.use(express.json({ limit: '10mb' }))
+app.use((req, res, next) => { console.log(`[req] ${req.method} ${req.url}`); next() })
+app.use(express.json({ limit: '50mb' }))
 
 // Mount all route modules under /api
 app.use('/api', configRoutes)
+app.use('/api', imageRoutes)
 app.use('/api', userRoutes)
 app.use('/api', noteRoutes)
 app.use('/api', folderRoutes)
@@ -41,6 +44,9 @@ function getLocalIPs() {
 // Serve frontend in Electron production build
 export async function startServer({ staticDir } = {}) {
   const dir = staticDir || process.env.STATIC_DIR
+
+  // Serve uploaded images (always, dev and prod)
+  app.use('/uploads', express.static(getImagesDir()))
 
   if (dir) {
     app.use(express.static(dir))
