@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { EyeOff } from 'lucide-react'
 import { useNotesStore } from '../store/useNotesStore'
-import { encryptText } from '../crypto'
-import { dbUpdateNote } from '../db/database'
 import { getWikiQuery } from '../utils/markdownUtils'
 import { getLanguageMetadata } from '../utils/languageUtils'
 
@@ -22,31 +20,6 @@ import { SpeechBrain } from './SpeechBrain'
 const noteFontKey = (id) => `personal-brain-note-font-${id}`
 const noteHideKey = (id) => `personal-brain-hidden-${id}`
 
-// Returns approximate caret {x, y} screen coordinates for a textarea
-function getCaretCoordinates(textarea, cursorPos) {
-  const style = window.getComputedStyle(textarea)
-  const mirror = document.createElement('div')
-  ;['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing',
-    'paddingTop','paddingLeft','paddingRight','paddingBottom',
-    'borderTopWidth','borderLeftWidth','boxSizing','wordWrap','whiteSpace','overflowWrap',
-  ].forEach(p => { mirror.style[p] = style[p] })
-  mirror.style.position = 'absolute'
-  mirror.style.top = '-9999px'
-  mirror.style.left = '-9999px'
-  mirror.style.width = `${textarea.offsetWidth}px`
-  mirror.style.overflow = 'hidden'
-  document.body.appendChild(mirror)
-  mirror.textContent = textarea.value.slice(0, cursorPos)
-  const span = document.createElement('span')
-  span.textContent = '.'
-  mirror.appendChild(span)
-  const taRect = textarea.getBoundingClientRect()
-  const x = taRect.left + span.offsetLeft - textarea.scrollLeft
-  const y = taRect.top + span.offsetTop - textarea.scrollTop + span.offsetHeight
-  document.body.removeChild(mirror)
-  return { x, y }
-}
-
 export default function Editor({ onImport, showNotification, revealInExplorer }) {
   const { 
     getActiveNote, updateNote, notes, openTabs, 
@@ -57,43 +30,43 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const activeNote = getActiveNote()
   const vimMode = settings?.extra?.vimMode || false
 
-  const [mode, setMode] = useState(() => localStorage.getItem('editor-mode') || 'split')
-  const [previewContent, setPreviewContent] = useState('')
+  const [mode, setMode] = useState(() => {
+    const saved = localStorage.getItem('editor-mode')
+    return saved === 'split' || saved === 'preview' ? 'edit' : (saved || 'edit')
+  })
+  const [previewContent, setPreviewContent] = useState('') // unfolded — feeds MarkdownPreview (graph/chat modes)
+  const [editorValue, setEditorValue] = useState('')        // folded (diagrams/images collapsed) — feeds the live editor
   const [contentHidden, setContentHidden] = useState(false)
   const [noteFont, setNoteFont] = useState('Inter')
   const [showSpeech, setShowSpeech] = useState(false)
-  
+
   const { extension: langExt, isMarkdown } = getLanguageMetadata(activeNote?.title)
-  
-  const textareaRef = useRef(null)
+
   const vimEditorRef = useRef(null)
   const lastNoteId  = useRef(null)
   const saveTimeout = useRef(null)
-  // Tracks latest content without triggering re-renders (used by diagram saves)
+  // Tracks latest (unfolded) content without triggering re-renders (used by diagram saves)
   const latestContentRef = useRef('')
 
   useEffect(() => { localStorage.setItem('editor-mode', mode) }, [mode])
 
   // ── Sync Logic ────────────────────────────────────────────────────────────
-  // Reset so sync re-runs when toggling vim mode (textarea remounts fresh)
-  useEffect(() => { lastNoteId.current = null }, [vimMode])
-
   useEffect(() => {
     if (!activeNote) return
     const val = activeNote.content || ''
     if (activeNote.id !== lastNoteId.current) {
       lastNoteId.current = activeNote.id
       latestContentRef.current = val
-      if (textareaRef.current) textareaRef.current.value = collapseImages(collapseAllDiagrams(val))
       setPreviewContent(val)
+      setEditorValue(collapseImages(collapseAllDiagrams(val)))
       setContentHidden(localStorage.getItem(noteHideKey(activeNote.id)) === '1')
       setNoteFont(localStorage.getItem(noteFontKey(activeNote.id)) || 'Inter')
-    } else if (textareaRef.current && textareaRef.current.value !== val) {
+    } else if (latestContentRef.current !== val) {
       latestContentRef.current = val
-      textareaRef.current.value = collapseImages(collapseAllDiagrams(val))
       setPreviewContent(val)
+      setEditorValue(collapseImages(collapseAllDiagrams(val)))
     }
-  }, [activeNote?.id, activeNote?.content, vimMode, mode])
+  }, [activeNote?.id, activeNote?.content])
 
   // ── Diagram fold helpers ─────────────────────────────────────────────────
   const foldedDiagramsRef = useRef(new Map()) // id → originalBlock
@@ -114,30 +87,28 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     return display
   }, [])
 
-  // Expand a single collapsed diagram in the textarea
-  const expandDiagram = useCallback((id) => {
-    const textarea = textareaRef.current
-    if (!textarea) return
-    const original = foldedDiagramsRef.current.get(id)
-    if (!original) return
-    const newVal = textarea.value.replace(FOLD_PLACEHOLDER(id), original)
-    foldedDiagramsRef.current.delete(id)
-    textarea.value = newVal
-    // Restore image placeholders too so latestContentRef has full content
-    let fullContent = newVal
-    for (const [altId, dataUrl] of foldedImagesRef.current) {
-      fullContent = fullContent.replace(IMAGE_PLACEHOLDER(altId), `![${altId}](${dataUrl})`)
+  // Restores diagram/image placeholders back to their real content
+  const expandFolds = useCallback((content) => {
+    let out = content
+    for (const [id, originalBlock] of foldedDiagramsRef.current) {
+      out = out.replace(FOLD_PLACEHOLDER(id), originalBlock)
     }
-    latestContentRef.current = fullContent
+    for (const [altId, dataUrl] of foldedImagesRef.current) {
+      out = out.replace(IMAGE_PLACEHOLDER(altId), `![${altId}](${dataUrl})`)
+    }
+    return out
   }, [])
 
-  // Collapse a single diagram back
-  const collapseDiagram = useCallback((id) => {
-    const textarea = textareaRef.current
-    if (!textarea) return
-    const display = collapseAllDiagrams(textarea.value)
-    textarea.value = display
-  }, [collapseAllDiagrams])
+  // Expand a single collapsed diagram in the editor
+  const expandDiagram = useCallback((id) => {
+    const original = foldedDiagramsRef.current.get(id)
+    if (!original) return
+    const currentFolded = vimEditorRef.current?.getCursorAndDoc()?.doc ?? ''
+    const newVal = currentFolded.replace(FOLD_PLACEHOLDER(id), original)
+    foldedDiagramsRef.current.delete(id)
+    setEditorValue(newVal)
+    latestContentRef.current = expandFolds(newVal)
+  }, [expandFolds])
 
   // ── AI State ─────────────────────────────────────────────────────────────
   const [aiStatus, setAiStatus]     = useState(null)
@@ -147,48 +118,28 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const aiAbortRef = useRef(null)
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleEditorKeyDown = (e) => {
-    // WikiSuggest keyboard navigation (textarea mode)
-    if (['ArrowDown','ArrowUp','Enter','Escape'].includes(e.key)) {
-      if (wikiKeyHandlerRef.current?.(e.key)) { e.preventDefault(); return }
-    }
-    if (e.key !== 'Tab') return
-    e.preventDefault()
-    const ta    = e.target
-    const start = ta.selectionStart
-    const end   = ta.selectionEnd
-    const spaces = '    '
-    ta.value = ta.value.slice(0, start) + spaces + ta.value.slice(end)
-    ta.selectionStart = ta.selectionEnd = start + spaces.length
-    handleChange({ target: ta })
-  }
-
-  const handleChange = (e) => {
-    let content = e.target.value
-    const cursor  = e.target.selectionStart
-    // Restore collapsed placeholders before saving/previewing
-    for (const [id, originalBlock] of foldedDiagramsRef.current) {
-      content = content.replace(FOLD_PLACEHOLDER(id), originalBlock)
-    }
-    for (const [altId, dataUrl] of foldedImagesRef.current) {
-      content = content.replace(IMAGE_PLACEHOLDER(altId), `![${altId}](${dataUrl})`)
-    }
+  const handleEditorChange = (rawContent) => {
+    const content = expandFolds(rawContent)
     latestContentRef.current = content
     setPreviewContent(content)
+    // Mantém editorValue em dia — se o editor remontar (troca de vim mode/fonte), o valor inicial precisa ser o atual, não o do último load da nota
+    setEditorValue(rawContent)
 
     clearTimeout(saveTimeout.current)
     saveTimeout.current = setTimeout(() => {
       if (activeNote) updateNote(activeNote.id, { content })
     }, 600)
 
-    const query = getWikiQuery(content, cursor)
+    const info = vimEditorRef.current?.getCursorAndDoc()
+    if (!info) return
+    const query = getWikiQuery(info.doc, info.cursor)
     if (query !== null) {
       const q = query.toLowerCase()
       const items = notes
         .filter((n) => n.id !== activeNote?.id && n.title.toLowerCase().includes(q))
         .slice(0, 6)
-      const coords = getCaretCoordinates(e.target, cursor)
-      setWikiSuggest({ query, items, selectedIdx: 0, x: coords.x, y: coords.y })
+      const coords = vimEditorRef.current?.getCursorPosition?.() || {}
+      setWikiSuggest({ query, items, selectedIdx: 0, ...coords })
     } else {
       setWikiSuggest(null)
     }
@@ -198,37 +149,13 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
 
   const applySuggestion = (title) => {
     setWikiSuggest(null)
-    if (vimMode) {
-      vimEditorRef.current?.replaceWikiText(title)
-      return
-    }
-    const ta = textareaRef.current
-    if (!ta) return
-    const cursor = ta.selectionStart
-    const val    = ta.value
-    const open   = val.lastIndexOf('[[', cursor)
-    if (open === -1) return
-
-    const before    = val.slice(0, open)
-    const after     = val.slice(cursor)
-    const newVal    = `${before}[[${title}]]${after}`
-    const newCursor = before.length + title.length + 4
-
-    ta.value = newVal
-    ta.setSelectionRange(newCursor, newCursor)
-    ta.focus()
-
-    setPreviewContent(newVal)
-
-    clearTimeout(saveTimeout.current)
-    saveTimeout.current = setTimeout(() => {
-      if (activeNote) updateNote(activeNote.id, { content: newVal })
-    }, 300)
+    vimEditorRef.current?.replaceWikiText(title)
   }
 
   const handleAiFormat = useCallback(async () => {
-    const ta = textareaRef.current
-    if (!ta || !activeNote) return
+    if (!activeNote) return
+    const info = vimEditorRef.current?.getCursorAndDoc()
+    if (!info) return
 
     try {
       const statusRes = await fetch(`http://${window.location.hostname}:3001/api/ollama/status`)
@@ -242,9 +169,8 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
       return
     }
 
-    const selStart = ta.selectionStart
-    const selEnd   = ta.selectionEnd
-    const hasSelection = selStart !== selEnd
+    const { doc: foldedText, selFrom, selTo } = info
+    const hasSelection = selFrom !== selTo
     const ai_model = settings.extra?.aiModel || 'gemma3:12b'
 
     const confirmed = window.confirm(
@@ -253,8 +179,8 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     )
     if (!confirmed) return
 
-    const fullText      = ta.value
-    const contentToSend = hasSelection ? fullText.slice(selStart, selEnd) : fullText
+    // AI sempre opera em texto sem placeholders de diagrama/imagem
+    const contentToSend = hasSelection ? expandFolds(foldedText.slice(selFrom, selTo)) : latestContentRef.current
 
     setAiStatus('formatting')
     setAiProgress({ chunk: 0, total: 0 })
@@ -262,12 +188,14 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     aiAbortRef.current = controller
 
     const applyContent = (formatted) => {
-      const newVal = hasSelection
-        ? fullText.slice(0, selStart) + formatted + fullText.slice(selEnd)
+      const newFolded = hasSelection
+        ? foldedText.slice(0, selFrom) + formatted + foldedText.slice(selTo)
         : formatted
-      ta.value = newVal
-      setPreviewContent(newVal)
-      return newVal
+      setEditorValue(newFolded)
+      const expanded = expandFolds(newFolded)
+      latestContentRef.current = expanded
+      setPreviewContent(expanded)
+      return expanded
     }
 
     try {
@@ -319,53 +247,28 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
       aiAbortRef.current = null
       setAiStatus(null)
     }
-  }, [activeNote, notes, updateNote, aiTranslate, settings.extra?.aiModel])
+  }, [activeNote, notes, updateNote, aiTranslate, settings.extra?.aiModel, expandFolds])
 
   const insertText = (before, after = '', block = false) => {
-    if (vimMode) {
-      vimEditorRef.current?.insertText(before + after)
-      return
-    }
-    const ta = textareaRef.current
-    if (!ta) return
-    ta.focus()
-    const start = ta.selectionStart
-    const val   = ta.value
-    if (block) {
-      const lineStart = val.lastIndexOf('\n', start - 1) + 1
-      ta.setSelectionRange(lineStart, lineStart)
-      document.execCommand('insertText', false, before)
-    } else {
-      const selected = val.slice(start, ta.selectionEnd)
-      document.execCommand('insertText', false, before + selected + after)
-      if (!selected && after) {
-        const pos = ta.selectionStart - after.length
-        ta.setSelectionRange(pos, pos)
-      }
-    }
-    setPreviewContent(ta.value)
-    clearTimeout(saveTimeout.current)
-    saveTimeout.current = setTimeout(() => {
-      if (activeNote) updateNote(activeNote.id, { content: ta.value })
-    }, 300)
+    vimEditorRef.current?.insertFormatting(before, after, block)
   }
 
   const [interimSpeech, setInterimSpeech] = useState('')
 
   const handleSpeechTranscript = ({ final, interim }) => {
     if (!activeNote) return
-    
-    let baseContent = previewContent
+
     if (final) {
-        baseContent += final
+        const baseContent = previewContent + final
         setPreviewContent(baseContent)
-        if (textareaRef.current) textareaRef.current.value = baseContent
+        setEditorValue(collapseImages(collapseAllDiagrams(baseContent)))
+        latestContentRef.current = baseContent
         clearTimeout(saveTimeout.current)
         saveTimeout.current = setTimeout(() => {
           updateNote(activeNote.id, { content: baseContent })
         }, 500)
     }
-    
+
     setInterimSpeech(interim || '')
   }
 
@@ -376,7 +279,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   // Keeps wikiSuggestRef in sync so the key handler sees latest state
   useEffect(() => { wikiSuggestRef.current = wikiSuggest }, [wikiSuggest])
 
-  // Set once — checked by VimEditor keymap and handleEditorKeyDown
+  // Set once — checked by VimEditor's internal keymap
   useEffect(() => {
     wikiKeyHandlerRef.current = (key) => {
       const ws = wikiSuggestRef.current
@@ -437,12 +340,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
       const newContent = latestContentRef.current + fullMd
       latestContentRef.current = newContent
       setPreviewContent(newContent)
-
-      if (vimMode) {
-        vimEditorRef.current?.insertText(fullMd)
-      } else if (textareaRef.current) {
-        textareaRef.current.value += fullMd
-      }
+      vimEditorRef.current?.insertText(fullMd)
 
       clearTimeout(saveTimeout.current)
       saveTimeout.current = setTimeout(() => {
@@ -463,7 +361,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     )
     latestContentRef.current = newContent
     setPreviewContent(newContent)
-    if (textareaRef.current) textareaRef.current.value = collapseImages(collapseAllDiagrams(newContent))
+    setEditorValue(collapseImages(collapseAllDiagrams(newContent)))
     clearTimeout(saveTimeout.current)
     saveTimeout.current = setTimeout(() => {
       if (activeNote) updateNote(activeNote.id, { content: newContent })
@@ -471,26 +369,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   }
 
   const insertColor = (color) => {
-    if (vimMode) {
-      vimEditorRef.current?.insertText(`[]{${color}}`)
-      return
-    }
-    const ta = textareaRef.current
-    if (!ta) return
-    ta.focus()
-    const start = ta.selectionStart
-    const end = ta.selectionEnd
-    const selected = ta.value.slice(start, end)
-    document.execCommand('insertText', false, `[${selected}]{${color}}`)
-    if (!selected) {
-      const pos = ta.selectionStart - `]{${color}}`.length - 1
-      ta.setSelectionRange(pos, pos)
-    }
-    setPreviewContent(ta.value)
-    clearTimeout(saveTimeout.current)
-    saveTimeout.current = setTimeout(() => {
-      if (activeNote) updateNote(activeNote.id, { content: ta.value })
-    }, 300)
+    vimEditorRef.current?.insertFormatting('[', `]{${color}}`, false)
   }
 
   const toggleHide = () => {
@@ -519,12 +398,11 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     const block = `\n\`\`\`diagram\n${defaultData}\n\`\`\`\n`
     insertText(block)
     // Collapse immediately after inserting so the JSON doesn't clutter the editor
-    if (textareaRef.current) textareaRef.current.value = collapseAllDiagrams(textareaRef.current.value)
-    setMode('split')
+    const currentFolded = vimEditorRef.current?.getCursorAndDoc()?.doc ?? ''
+    setEditorValue(collapseAllDiagrams(currentFolded))
   }
 
   // ── Resizable Logic ───────────────────────────────────────────────────────
-  const [splitLeft, setSplitLeft] = useState(50)
   const [triLeft, setTriLeft] = useState(33)
   const [triMid, setTriMid] = useState(33)
   const panelDrag = useRef(null)
@@ -535,9 +413,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
       const dx = e.clientX - panelDrag.current.startX
       const containerW = document.getElementById('editor-content-area')?.offsetWidth || window.innerWidth
       const deltaPct = (dx / containerW) * 100
-      if (panelDrag.current.type === 'split') {
-        setSplitLeft(Math.max(15, Math.min(85, panelDrag.current.startVal + deltaPct)))
-      } else if (panelDrag.current.type === 'tri-left') {
+      if (panelDrag.current.type === 'tri-left') {
         const newLeft = Math.max(10, Math.min(80, panelDrag.current.startVal + deltaPct))
         const diff = newLeft - panelDrag.current.startVal
         setTriLeft(newLeft)
@@ -578,7 +454,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
 
   const startPanelDrag = (type, e) => {
     e.preventDefault()
-    panelDrag.current = { type, startX: e.clientX, startVal: type === 'split' ? splitLeft : type === 'tri-left' ? triLeft : triMid, startVal2: triMid }
+    panelDrag.current = { type, startX: e.clientX, startVal: type === 'tri-left' ? triLeft : triMid, startVal2: triMid }
     document.body.style.cursor = 'col-resize'
   }
 
@@ -603,11 +479,11 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     )
   }
 
-  const showEditor  = mode === 'edit' || mode === 'split' || mode === 'graph' || mode === 'chat'
-  const showPreview = mode === 'preview' || mode === 'split' || mode === 'graph' || mode === 'chat'
-  
-  const editorPct  = mode === 'edit' ? 100 : mode === 'preview' ? 0 : (mode === 'graph' || mode === 'chat') ? triLeft : splitLeft
-  const previewPct = mode === 'preview' ? 100 : mode === 'edit' ? 0 : (mode === 'graph' || mode === 'chat') ? triMid : (100 - splitLeft)
+  const showEditor  = mode === 'edit' || mode === 'graph' || mode === 'chat'
+  const showPreview = mode === 'graph' || mode === 'chat'
+
+  const editorPct  = showPreview ? triLeft : 100
+  const previewPct = showPreview ? triMid : 0
 
   return (
     <div className="flex flex-col h-full bg-[#0e0e1a]/40 text-ui-text">
@@ -665,63 +541,29 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
         <div id="editor-content-area" className="flex flex-1 overflow-hidden relative">
           {showEditor && (
             <div className="flex flex-col overflow-hidden relative" style={{ width: `${editorPct}%`, flexShrink: 0 }}>
-              {vimMode ? (
-                <VimEditor
-                  ref={vimEditorRef}
-                  key={activeNote.id}
-                  value={previewContent}
-                  font={noteFont}
-                  vimrc={settings?.extra?.vimrc || ''}
-                  language={langExt}
-                  wikiKeyHandlerRef={wikiKeyHandlerRef}
-                  onCloseTab={() => closeTab(activeNoteId)}
-                  onChange={(val) => {
-                    let fullVal = val
-                    for (const [id, url] of foldedImagesRef.current) {
-                      fullVal = fullVal.replace(IMAGE_PLACEHOLDER(id), `![${id}](${url})`)
-                    }
-                    latestContentRef.current = fullVal
-                    setPreviewContent(fullVal)
-                    if (activeNote) updateNote(activeNote.id, { content: fullVal })
-                    const info = vimEditorRef.current?.getCursorAndDoc()
-                    if (info) {
-                      const query = getWikiQuery(info.doc, info.cursor)
-                      if (query !== null) {
-                        const q = query.toLowerCase()
-                        const items = notes.filter(n => n.id !== activeNote?.id && n.title.toLowerCase().includes(q)).slice(0, 6)
-                        const coords = vimEditorRef.current?.getCursorPosition?.() || {}
-                        setWikiSuggest({ query, items, selectedIdx: 0, ...coords })
-                      } else {
-                        setWikiSuggest(null)
-                      }
-                    }
-                  }}
-                  onSave={(val) => { if (activeNote) updateNote(activeNote.id, { content: val }) }}
-                />
-              ) : (
-                <textarea
-                  ref={textareaRef}
-                  className="editor-textarea"
-                  defaultValue={previewContent}
-                  onChange={handleChange}
-                  onKeyDown={handleEditorKeyDown}
-                  onClick={(e) => {
-                    const ta = e.target
-                    const lineIndex = ta.value.slice(0, ta.selectionStart).split('\n').length - 1
-                    const line = ta.value.split('\n')[lineIndex] || ''
-                    const match = line.match(/^```diagram:collapsed:(.+)```$/)
-                    if (match) expandDiagram(match[1])
-                  }}
-                  spellCheck={false}
-                  style={{ fontFamily: `'${noteFont}', sans-serif` }}
-                />
-              )}
+              <VimEditor
+                ref={vimEditorRef}
+                key={`${activeNote.id}-${vimMode}`}
+                value={editorValue}
+                vimMode={vimMode}
+                font={noteFont}
+                vimrc={settings?.extra?.vimrc || ''}
+                language={langExt}
+                wikiKeyHandlerRef={wikiKeyHandlerRef}
+                onCloseTab={() => closeTab(activeNoteId)}
+                onChange={handleEditorChange}
+                onLineClick={(lineText) => {
+                  const match = lineText.match(/^```diagram:collapsed:(.+)```$/)
+                  if (match) expandDiagram(match[1])
+                }}
+                onSave={(val) => { if (activeNote) updateNote(activeNote.id, { content: expandFolds(val) }) }}
+              />
               <WikiSuggest suggest={wikiSuggest} onApply={applySuggestion} onClose={() => setWikiSuggest(null)} />
             </div>
           )}
 
           {showEditor && showPreview && (
-            <div onMouseDown={(e) => startPanelDrag(mode === 'split' ? 'split' : 'tri-left', e)} 
+            <div onMouseDown={(e) => startPanelDrag('tri-left', e)}
               className="w-1 cursor-col-resize bg-[#313244] hover:bg-ui-accent transition-colors z-10" />
           )}
 
@@ -743,8 +585,8 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                       }
                     )
                     latestContentRef.current = newVal
-                    // Sync textarea so activeNote.content useEffect doesn't trigger setPreviewContent
-                    if (textareaRef.current) textareaRef.current.value = newVal
+                    setPreviewContent(newVal)
+                    setEditorValue(collapseImages(collapseAllDiagrams(newVal)))
                     if (activeNote) updateNote(activeNote.id, { content: newVal })
                   }} />
                 <BacklinksPanel noteTitle={activeNote.title} notes={notes} onSelect={setActiveNote} />

@@ -5,6 +5,7 @@ import { indentUnit, indentOnInput } from '@codemirror/language'
 import { indentWithTab, history } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
 import { vim, Vim, getCM } from '@replit/codemirror-vim'
+import { markdownLivePreview, livePreviewTheme } from './editor/livePreview'
 
 // Compartments for dynamic configuration
 const lineNumbersCompartment  = new Compartment()
@@ -107,18 +108,20 @@ function initVimOptions() {
   Vim.defineOption('incsearch',     false,  'boolean', ['is'],  noop)
 }
 
-const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language, wikiKeyHandlerRef }, ref) {
+const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language, wikiKeyHandlerRef, vimMode = false, onLineClick }, ref) {
   const containerRef  = useRef(null)
   const viewRef       = useRef(null)
   const lastValueRef  = useRef(value)
   const onSaveRef     = useRef(onSave)
+  const onLineClickRef = useRef(onLineClick)
   const suppressRef   = useRef(false)
   const [mode, setMode] = useState('NORMAL')
   const [status, setStatus] = useState(null)
   const statusTimeout = useRef(null)
 
   useEffect(() => { onSaveRef.current = onSave }, [onSave])
-  initVimOptions()
+  useEffect(() => { onLineClickRef.current = onLineClick }, [onLineClick])
+  if (vimMode) initVimOptions()
 
   const showStatus = (msg) => {
     setStatus(msg)
@@ -132,6 +135,29 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
       if (!view) return
       const { from } = view.state.selection.main
       view.dispatch({ changes: { from, insert: text }, selection: { anchor: from + text.length } })
+      view.focus()
+    },
+    // Wraps the selection with before/after, or inserts before at line start when block=true.
+    // Mirrors the old textarea toolbar behavior (bold/italic/heading/list/etc).
+    insertFormatting: (before, after = '', block = false) => {
+      const view = viewRef.current
+      if (!view) return
+      const { from, to } = view.state.selection.main
+      if (block) {
+        const line = view.state.doc.lineAt(from)
+        view.dispatch({
+          changes: { from: line.from, insert: before },
+          selection: { anchor: from + before.length, head: to + before.length },
+        })
+      } else {
+        const selected = view.state.doc.sliceString(from, to)
+        view.dispatch({
+          changes: { from, to, insert: before + selected + after },
+          selection: selected
+            ? { anchor: from + before.length, head: from + before.length + selected.length }
+            : { anchor: from + before.length },
+        })
+      }
       view.focus()
     },
     // Replace [[partial with [[Title]] — used by wiki autocomplete
@@ -153,7 +179,8 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
     getCursorAndDoc: () => {
       const view = viewRef.current
       if (!view) return null
-      return { cursor: view.state.selection.main.from, doc: view.state.doc.toString() }
+      const { from, to } = view.state.selection.main
+      return { cursor: from, selFrom: from, selTo: to, doc: view.state.doc.toString() }
     },
     getCursorPosition: () => {
       const view = viewRef.current
@@ -244,8 +271,21 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
       doc: lastValueRef.current,
       extensions: [
         // ── GOVERNANCE ──
-        // vim() must come first; no Prec wrapper — it handles its own event priority
-        vim(),
+        // vim() must come first when present; no Prec wrapper — it handles its own event priority
+        ...(vimMode ? [vim()] : []),
+
+        markdownLivePreview(),
+        livePreviewTheme,
+
+        EditorView.domEventHandlers({
+          click: (event, view) => {
+            const pos = view.posAtCoords({ x: event.clientX, y: event.clientY })
+            if (pos == null) return false
+            const clickedLine = view.state.doc.lineAt(pos)
+            onLineClickRef.current?.(clickedLine.text)
+            return false
+          },
+        }),
 
         // Wiki suggest keyboard interception — only active when wikiKeyHandlerRef.current is set
         keymap.of([
@@ -344,19 +384,21 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
                 {status}
             </div>
         )}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-        padding: '6px 14px', background: 'rgba(14,14,26,0.95)', borderBottom: '1px solid #1e1e2e',
-      }}>
-        <span style={{
-          fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
-          letterSpacing: '0.08em', color: '#1e1e2e', background: modeColor,
-          padding: '2px 10px', borderRadius: 3, transition: 'background 0.1s',
-        }}>{mode}</span>
-        <span style={{ fontSize: 13, color: '#585b70', fontFamily: "'JetBrains Mono', monospace" }}>
-          i · inserir &nbsp;|&nbsp; Esc · normal &nbsp;|&nbsp; :w · salvar &nbsp;|&nbsp; :set number
-        </span>
-      </div>
+      {vimMode && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+          padding: '6px 14px', background: 'rgba(14,14,26,0.95)', borderBottom: '1px solid #1e1e2e',
+        }}>
+          <span style={{
+            fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
+            letterSpacing: '0.08em', color: '#1e1e2e', background: modeColor,
+            padding: '2px 10px', borderRadius: 3, transition: 'background 0.1s',
+          }}>{mode}</span>
+          <span style={{ fontSize: 13, color: '#585b70', fontFamily: "'JetBrains Mono', monospace" }}>
+            i · inserir &nbsp;|&nbsp; Esc · normal &nbsp;|&nbsp; :w · salvar &nbsp;|&nbsp; :set number
+          </span>
+        </div>
+      )}
       <div ref={containerRef} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }} />
     </div>)
 })

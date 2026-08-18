@@ -1,9 +1,7 @@
-import { Edit3, Columns, Eye, Network, MessageSquare } from 'lucide-react'
+import { Edit3, Network, MessageSquare } from 'lucide-react'
 
 const MODES = [
-  { id: 'edit',       icon: Edit3,     label: 'Editar',   title: 'Somente editor' },
-  { id: 'split',      icon: Columns,   label: 'Split',    title: 'Editor + Preview' },
-  { id: 'preview',    icon: Eye,       label: 'Preview',  title: 'Somente preview' },
+  { id: 'edit',       icon: Edit3,     label: 'Editar',   title: 'Editor' },
   { id: 'graph',      icon: Network,   label: 'Grafo',    title: 'Editor + Preview + Grafo' },
   { id: 'graph-full', icon: Network,   label: 'Grafo Full', title: 'Grafo em Tela Cheia' },
   { id: 'chat',       icon: MessageSquare, label: 'Chat', title: 'Editor + Preview + Chat' },
