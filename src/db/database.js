@@ -47,8 +47,8 @@ export async function dbCreateFolder(folder) {
   return req('POST', '/folders', folder)
 }
 
-export async function dbUpdateFolder(id, name) {
-  return req('PUT', `/folders/${encodeURIComponent(id)}`, { name })
+export async function dbUpdateFolder(id, changes) {
+  return req('PUT', `/folders/${encodeURIComponent(id)}`, changes)
 }
 
 export async function dbDeleteFolder(id) {

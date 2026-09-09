@@ -46,6 +46,7 @@ router.put('/notes/:id', async (req, res) => {
       if ('title'     in changes) { fields.push('title=?');     values.push(changes.title) }
       if ('content'   in changes) { fields.push('content=?');   values.push(changes.content) }
       if ('folder_id' in changes) { fields.push('folder_id=?'); values.push(changes.folder_id) }
+      if ('status'    in changes) { fields.push('status=?');    values.push(changes.status) }
       fields.push('updated_at=?')
       values.push(now)
       values.push(id)
@@ -57,6 +58,7 @@ router.put('/notes/:id', async (req, res) => {
       if ('title'     in changes) { fields.push(`title=$${i++}`);     values.push(changes.title) }
       if ('content'   in changes) { fields.push(`content=$${i++}`);   values.push(changes.content) }
       if ('folder_id' in changes) { fields.push(`folder_id=$${i++}`); values.push(changes.folder_id) }
+      if ('status'    in changes) { fields.push(`status=$${i++}`);    values.push(changes.status) }
       fields.push(`updated_at=$${i++}`)
       values.push(now)
       values.push(id)

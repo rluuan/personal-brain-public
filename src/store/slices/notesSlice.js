@@ -10,9 +10,19 @@ export const createNotesSlice = (set, get) => ({
   activeNoteId: null,
   openTabs: [],       // ordered array of note IDs currently open as tabs
   encryptionKey: null, // raw passphrase — never leaves the browser
+  noteFilter: { type: 'all', value: null }, // navegação da coluna de notas: 'all' | 'folder' | 'status' | 'tag'
 
   setNotes: (notes) => set({ notes }),
   setEncryptionKeyData: (key) => set({ encryptionKey: key }),
+  setNoteFilter: (type, value = null) => set({ noteFilter: { type, value } }),
+
+  getFilteredNotes: () => {
+    const { notes, noteFilter } = get()
+    if (noteFilter.type === 'folder') return notes.filter((n) => n.folder_id === noteFilter.value)
+    if (noteFilter.type === 'status') return notes.filter((n) => n.status === noteFilter.value)
+    if (noteFilter.type === 'tag') return notes.filter((n) => extractTags(n.content).includes(noteFilter.value))
+    return notes
+  },
 
   getAllTags: () => {
     const { notes } = get()

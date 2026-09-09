@@ -1,4 +1,5 @@
 import { Edit3, Network, MessageSquare } from 'lucide-react'
+import { STATUS_OPTIONS, getStatusInfo } from '../../utils/sidebarOptions'
 
 const MODES = [
   { id: 'edit',       icon: Edit3,     label: 'Editar',   title: 'Editor' },
@@ -7,8 +8,9 @@ const MODES = [
   { id: 'chat',       icon: MessageSquare, label: 'Chat', title: 'Editor + Preview + Chat' },
 ]
 
-export function EditorHeader({ activeNote, mode, setMode }) {
+export function EditorHeader({ activeNote, mode, setMode, onStatusChange }) {
   if (!activeNote) return null
+  const statusInfo = getStatusInfo(activeNote.status)
 
   return (
     <div
@@ -27,6 +29,21 @@ export function EditorHeader({ activeNote, mode, setMode }) {
             timeZone: 'America/Sao_Paulo',
           })}
         </span>
+
+        <select
+          value={activeNote.status || ''}
+          onChange={(e) => onStatusChange?.(e.target.value || null)}
+          className="px-2 py-0.5 rounded-md text-[10px] outline-none cursor-pointer flex-shrink-0"
+          style={{
+            background: statusInfo ? `${statusInfo.color}22` : 'rgba(37,37,53,0.6)',
+            color: statusInfo ? statusInfo.color : '#a6adc8',
+            border: `1px solid ${statusInfo ? `${statusInfo.color}55` : '#45475a'}`,
+          }}
+          title="Status da nota"
+        >
+          <option value="">Sem status</option>
+          {STATUS_OPTIONS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+        </select>
       </div>
 
       <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(37,37,53,0.5)' }}>

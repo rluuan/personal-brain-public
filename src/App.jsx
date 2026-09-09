@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import ParticleBackground from './components/ParticleBackground'
 import Sidebar from './components/Sidebar'
+import NoteListColumn from './components/NoteListColumn'
 import Editor from './components/Editor'
 import SearchModal from './components/SearchModal'
 import NicknameModal from './components/NicknameModal'
@@ -221,14 +222,36 @@ export default function App() {
   const dragging = useRef(false)
   const startX   = useRef(0)
   const startW   = useRef(0)
-  const { revealInExplorer } = useNotesStore()
+
+  const [noteListWidth, setNoteListWidth] = useState(() => {
+    const saved = localStorage.getItem('personal-brain-notelist-width')
+    return saved ? Math.max(200, parseInt(saved)) : 260
+  })
+  const [mobileNoteListOpen, setMobileNoteListOpen] = useState(false)
+  const draggingNoteList = useRef(false)
+  const startXNoteList   = useRef(0)
+  const startWNoteList   = useRef(0)
+
+  const { revealInExplorer, noteFilter, setNoteFilter } = useNotesStore()
 
   const [notification, setNotification] = useState(null)
   const showNotification = (msg, type = 'success', onAction = null, actionLabel = 'Abrir') => {
     setNotification({ msg, type, onAction, actionLabel })
   }
 
-  const { load, loading, user, loginUser, settings, createNote, encryptionKey, setEncryptionKey, notes, checkNovidades } = useNotesStore()
+  const { load, loading, user, loginUser, settings, createNote, encryptionKey, setEncryptionKey, notes, checkNovidades, activeNoteId } = useNotesStore()
+
+  // Mobile: pick a filter → mostra lista de notas; escolher uma nota → mostra editor
+  useEffect(() => {
+    if (isMobile && mobileSidebarOpen) {
+      setMobileSidebarOpen(false)
+      setMobileNoteListOpen(true)
+    }
+  }, [noteFilter, isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isMobile && mobileNoteListOpen) setMobileNoteListOpen(false)
+  }, [activeNoteId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Apply theme CSS variables whenever settings change
   useEffect(() => {
@@ -300,6 +323,36 @@ export default function App() {
     }
   }, [])
 
+  // Note list column resize (desktop)
+  const onMouseDownNoteList = (e) => {
+    draggingNoteList.current = true
+    startXNoteList.current   = e.clientX
+    startWNoteList.current   = noteListWidth
+    document.body.style.cursor    = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!draggingNoteList.current) return
+      const delta = e.clientX - startXNoteList.current
+      setNoteListWidth(Math.max(200, startWNoteList.current + delta))
+    }
+    const onUp = (e) => {
+      if (!draggingNoteList.current) return
+      draggingNoteList.current = false
+      document.body.style.cursor    = ''
+      document.body.style.userSelect = ''
+      const finalW = Math.max(200, startWNoteList.current + (e.clientX - startXNoteList.current))
+      localStorage.setItem('personal-brain-notelist-width', String(finalW))
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [])
+
   const openImport = useCallback((folderId = null) => {
     setImportFolderId(folderId)
     setShowImport(true)
@@ -350,11 +403,11 @@ export default function App() {
 
       <div className="relative z-10 flex w-full h-full">
 
-        {/* ── Mobile: overlay when sidebar open ── */}
-        {isMobile && mobileSidebarOpen && (
+        {/* ── Mobile: overlay when sidebar or note list is open ── */}
+        {isMobile && (mobileSidebarOpen || mobileNoteListOpen) && (
           <div
             className="mobile-sidebar-overlay"
-            onClick={() => setMobileSidebarOpen(false)}
+            onClick={() => { setMobileSidebarOpen(false); setMobileNoteListOpen(false) }}
           />
         )}
 
@@ -414,10 +467,36 @@ export default function App() {
           </button>
         )}
 
+        {/* ── Nota List Column ── */}
+        {isMobile ? (
+          <div className={`mobile-sidebar-drawer ${mobileNoteListOpen ? 'open' : ''}`}>
+            <NoteListColumn />
+          </div>
+        ) : (
+          <div style={{ width: noteListWidth, flexShrink: 0 }}>
+            <NoteListColumn />
+          </div>
+        )}
+
+        {!isMobile && (
+          <div
+            onMouseDown={onMouseDownNoteList}
+            style={{
+              width: 4,
+              flexShrink: 0,
+              cursor: 'col-resize',
+              background: '#313244',
+              transition: 'background 0.15s',
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
+            onMouseOut={(e)  => (e.currentTarget.style.background = '#313244')}
+          />
+        )}
+
         {/* ── Editor ── */}
         <div className={`flex-1 overflow-hidden ${isMobile ? 'editor-main-area' : ''}`}>
-          <Editor 
-            onImport={openImport} 
+          <Editor
+            onImport={openImport}
             showNotification={showNotification}
             revealInExplorer={revealInExplorer}
           />

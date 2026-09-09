@@ -5,6 +5,12 @@ async function pgExec(sql, label) {
   catch (e) { console.warn(`[Schema] ${label}: ${e.message}`) }
 }
 
+// Adiciona coluna em banco SQLite já existente, sem quebrar se ela já existir
+function sqliteAddColumnIfMissing(db, table, columnDef) {
+  try { db.exec(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`) }
+  catch (e) { if (!/duplicate column name/i.test(e.message)) console.warn(`[Schema] ${table}.${columnDef}: ${e.message}`) }
+}
+
 export async function createSchemaPg() {
   const pool = getPgPool()
 
@@ -36,6 +42,8 @@ export async function createSchemaPg() {
       user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name       TEXT NOT NULL,
       parent_id  TEXT REFERENCES folders(id) ON DELETE SET NULL,
+      color      TEXT,
+      icon       TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS notes (
@@ -44,6 +52,7 @@ export async function createSchemaPg() {
       title      TEXT NOT NULL,
       content    TEXT NOT NULL DEFAULT '',
       folder_id  TEXT REFERENCES folders(id) ON DELETE SET NULL,
+      status     TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -54,6 +63,11 @@ export async function createSchemaPg() {
       extra           JSONB NOT NULL DEFAULT '{}'
     );
   `)
+
+  // 1b. Migração — adiciona colunas novas em bancos já existentes
+  await pgExec('ALTER TABLE folders ADD COLUMN IF NOT EXISTS color TEXT;', 'folders.color')
+  await pgExec('ALTER TABLE folders ADD COLUMN IF NOT EXISTS icon TEXT;', 'folders.icon')
+  await pgExec('ALTER TABLE notes ADD COLUMN IF NOT EXISTS status TEXT;', 'notes.status')
 
   // 2. pgvector extension (optional)
   let pgvectorAvailable = false
@@ -150,6 +164,8 @@ export function createSchemaSqlite() {
       user_id    TEXT NOT NULL,
       name       TEXT NOT NULL,
       parent_id  TEXT,
+      color      TEXT,
+      icon       TEXT,
       created_at TEXT NOT NULL,
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY(parent_id) REFERENCES folders(id) ON DELETE SET NULL
@@ -160,6 +176,7 @@ export function createSchemaSqlite() {
       title      TEXT NOT NULL,
       content    TEXT NOT NULL DEFAULT '',
       folder_id  TEXT,
+      status     TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -182,6 +199,12 @@ export function createSchemaSqlite() {
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
   `)
+
+  // Migração — adiciona colunas novas em bancos já existentes
+  sqliteAddColumnIfMissing(db, 'folders', 'color TEXT')
+  sqliteAddColumnIfMissing(db, 'folders', 'icon TEXT')
+  sqliteAddColumnIfMissing(db, 'notes', 'status TEXT')
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS claude_memory_nodes (
       id         TEXT PRIMARY KEY,

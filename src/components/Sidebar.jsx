@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { Inbox, Layers } from 'lucide-react'
 import MetricsModal from './MetricsModal'
 import { useNotesStore } from '../store/useNotesStore'
 
@@ -6,8 +7,8 @@ import { useNotesStore } from '../store/useNotesStore'
 import { SidebarHeader } from './sidebar/SidebarHeader'
 import { FolderFilter } from './sidebar/FolderFilter'
 import { FolderItem } from './sidebar/FolderItem'
-import { NoteItem } from './sidebar/NoteItem'
 import { ScraperPanel } from './sidebar/ScraperPanel'
+import { StatusSection } from './sidebar/StatusSection'
 import { TagsSection } from './sidebar/TagsSection'
 import { SidebarFooter } from './sidebar/SidebarFooter'
 
@@ -34,7 +35,7 @@ function sortByOrder(folders, order) {
 
 export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLiveMemoryHistory }) {
   const store = useNotesStore()
-  const { notes, folders, activeNoteId, createNote, createFolder, getAllTags, user, logout, openDailyNote, updateNote, deleteNote } = store
+  const { notes, folders, createNote, createFolder, getAllTags, user, logout, openDailyNote, noteFilter, setNoteFilter, settings, setTagColor } = store
   
   const [folderOrder, setFolderOrder] = useState(loadFolderOrder)
   const [showMetrics, setShowMetrics] = useState(false)
@@ -90,8 +91,9 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
   const rootFolders    = folderFilter
     ? allRootFolders.filter(f => folderMatchesFilter(f, folderFilter))
     : allRootFolders
-  const uncategorized = notes.filter((n) => !n.folder_id)
+  const uncategorizedCount = notes.filter((n) => !n.folder_id).length
   const allTags       = getAllTags()
+  const tagColors     = settings.extra?.tagColors || {}
 
   const openNovidades = () => {
     const existing = notes.find(n => n.title === NOVIDADES_TITLE)
@@ -118,6 +120,28 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
 
       {/* Tree Section */}
       <div className="flex-1 overflow-y-auto py-1.5 px-1 scrollbar-thin">
+        <button
+          onClick={() => setNoteFilter('all')}
+          className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer hover:bg-ui-hover/40 transition-all"
+          style={noteFilter.type === 'all' ? { background: 'rgba(49,49,85,0.7)' } : {}}
+        >
+          <Layers size={12} className="flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
+          <span className={`text-xs flex-1 text-left ${noteFilter.type === 'all' ? 'text-ui-accent font-semibold' : 'text-ui-text'}`}>Todas as notas</span>
+          <span className="text-ui-muted text-[10px]">{notes.length}</span>
+        </button>
+
+        {uncategorizedCount > 0 && (
+          <button
+            onClick={() => setNoteFilter('folder', null)}
+            className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer hover:bg-ui-hover/40 transition-all"
+            style={noteFilter.type === 'folder' && noteFilter.value === null ? { background: 'rgba(49,49,85,0.7)' } : {}}
+          >
+            <Inbox size={12} className="flex-shrink-0 text-ui-muted" />
+            <span className={`text-xs flex-1 text-left ${noteFilter.type === 'folder' && noteFilter.value === null ? 'text-ui-accent font-semibold' : 'text-ui-text'}`}>Sem pasta</span>
+            <span className="text-ui-muted text-[10px]">{uncategorizedCount}</span>
+          </button>
+        )}
+
         {rootFolders.map((folder) => {
           const isOver    = dragOverId === folder.id
           const isDragging = draggingId.current === folder.id
@@ -137,37 +161,33 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
                 background: isOver ? 'rgba(203,166,247,0.07)' : 'transparent',
               }}
             >
-              <FolderItem 
-                folder={folder} 
+              <FolderItem
+                folder={folder}
                 notes={notes}
                 subfolders={folders.filter((f) => f.parent_id === folder.id)}
-                allFolders={folders} 
-                activeNoteId={activeNoteId} 
-                depth={0} 
-                store={store} 
-                onImport={onImport} 
+                allFolders={folders}
+                activeFilter={noteFilter}
+                depth={0}
+                store={store}
+                onImport={onImport}
               />
             </div>
           )
         })}
 
-        {uncategorized.length > 0 && (
-          <div className={rootFolders.length > 0 ? 'mt-1 pt-1' : ''} style={rootFolders.length > 0 ? { borderTop: '1px solid #313244' } : {}}>
-            {rootFolders.length > 0 && <div className="px-2 py-1 text-ui-muted text-[10px] uppercase tracking-wider">Sem pasta</div>}
-            {uncategorized.map((note) => (
-              <NoteItem 
-                key={note.id} 
-                note={note} 
-                isActive={note.id === activeNoteId} 
-                onSelect={store.setActiveNote} 
-                onDelete={deleteNote} 
-                onRename={updateNote} 
-              />
-            ))}
-          </div>
-        )}
+        <StatusSection
+          notes={notes}
+          activeFilter={noteFilter}
+          onSelect={(statusId) => setNoteFilter(statusId ? 'status' : 'all', statusId)}
+        />
 
-        <TagsSection tags={allTags} />
+        <TagsSection
+          tags={allTags}
+          tagColors={tagColors}
+          activeFilter={noteFilter}
+          onSelect={(tag) => setNoteFilter(tag ? 'tag' : 'all', tag)}
+          onColorChange={setTagColor}
+        />
 
         <ScraperPanel folders={folders} onCreate={createNote} />
       </div>

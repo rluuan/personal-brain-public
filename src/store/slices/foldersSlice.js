@@ -5,16 +5,18 @@ export const createFoldersSlice = (set, get) => ({
 
   setFolders: (folders) => set({ folders }),
 
-  createFolder: async (name, parentId = null) => {
+  createFolder: async (name, parentId = null, extra = {}) => {
     const { user } = get()
     if (!user) return
     const id = `${user.id}-f-${Date.now()}`
-    const folder = { 
-      id, 
-      user_id: user.id, 
-      name, 
-      parent_id: parentId, 
-      created_at: new Date().toISOString() 
+    const folder = {
+      id,
+      user_id: user.id,
+      name,
+      parent_id: parentId,
+      color: extra.color || null,
+      icon: extra.icon || null,
+      created_at: new Date().toISOString()
     }
     await dbCreateFolder(folder)
     set((state) => ({ folders: [...state.folders, folder] }))
@@ -22,9 +24,16 @@ export const createFoldersSlice = (set, get) => ({
   },
 
   renameFolder: async (id, name) => {
-    await dbUpdateFolder(id, name)
+    await dbUpdateFolder(id, { name })
     set((state) => ({
       folders: state.folders.map((f) => (f.id === id ? { ...f, name } : f)),
+    }))
+  },
+
+  updateFolder: async (id, changes) => {
+    await dbUpdateFolder(id, changes)
+    set((state) => ({
+      folders: state.folders.map((f) => (f.id === id ? { ...f, ...changes } : f)),
     }))
   },
 

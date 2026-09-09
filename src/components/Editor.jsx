@@ -493,6 +493,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
         activeNote={activeNote}
         mode={mode}
         setMode={setMode}
+        onStatusChange={(status) => updateNote(activeNote.id, { status })}
       />
 
       {showEditor && (

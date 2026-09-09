@@ -43,4 +43,10 @@ export const createSettingsSlice = (set, get) => ({
   },
   
   setSettings: (settings) => set({ settings }),
+
+  setTagColor: async (tag, color) => {
+    const { settings, saveSettings } = get()
+    const tagColors = { ...(settings.extra?.tagColors || {}), [tag]: color }
+    await saveSettings({ ...settings, extra: { ...settings.extra, tagColors } })
+  },
 })
