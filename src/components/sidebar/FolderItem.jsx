@@ -23,10 +23,11 @@ export function FolderItem({ folder, notes, subfolders, allFolders, activeFilter
       <div
         className="group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer hover:bg-ui-hover/40 transition-all"
         style={isActive ? { background: 'rgba(49,49,85,0.7)' } : {}}
-        onClick={() => store.setNoteFilter('folder', folder.id)}
       >
-        <button onClick={(e) => { e.stopPropagation(); setOpen(!open) }} className="flex items-center gap-1.5 flex-1 min-w-0 text-left">
-          <span className="text-ui-muted flex-shrink-0">{open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}</span>
+        <button onClick={() => setOpen(!open)} className="flex-shrink-0 text-ui-muted">
+          {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+        </button>
+        <button onClick={() => store.setNoteFilter('folder', folder.id)} className="flex items-center gap-1.5 flex-1 min-w-0 text-left">
           <span className="flex-shrink-0" style={{ color: iconColor || 'var(--color-primary)' }}>
             {CustomIcon ? <CustomIcon size={12} /> : (open ? <FolderOpen size={12} /> : <Folder size={12} />)}
           </span>
