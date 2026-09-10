@@ -4,14 +4,14 @@ import { useNotesStore } from '../store/useNotesStore'
 import { NoteItem } from './sidebar/NoteItem'
 import { FOLDER_ICONS, getStatusInfo } from '../utils/sidebarOptions'
 
-function useFilterLabel(noteFilter, folders) {
+function useFilterLabel(noteFilter, folders, statuses) {
   if (noteFilter.type === 'folder') {
     if (noteFilter.value === null) return { label: 'Sem pasta', Icon: Inbox, color: undefined }
     const folder = folders.find((f) => f.id === noteFilter.value)
     return { label: folder?.name || 'Pasta', Icon: FOLDER_ICONS[folder?.icon] || Folder, color: folder?.color }
   }
   if (noteFilter.type === 'status') {
-    const status = getStatusInfo(noteFilter.value)
+    const status = getStatusInfo(noteFilter.value, statuses)
     return { label: status?.label || 'Status', Icon: CircleDot, color: status?.color }
   }
   if (noteFilter.type === 'tag') {
@@ -22,12 +22,12 @@ function useFilterLabel(noteFilter, folders) {
 
 export default function NoteListColumn() {
   const store = useNotesStore()
-  const { notes, folders, activeNoteId, noteFilter, getFilteredNotes, createNote, deleteNote, updateNote, setActiveNote } = store
+  const { notes, folders, activeNoteId, noteFilter, getFilteredNotes, getAllStatuses, createNote, deleteNote, updateNote, setActiveNote } = store
   const filteredNotes = getFilteredNotes()
     .slice()
     .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR', { sensitivity: 'base' }))
 
-  const { label, Icon, color } = useFilterLabel(noteFilter, folders)
+  const { label, Icon, color } = useFilterLabel(noteFilter, folders, getAllStatuses())
   const newNoteFolderId = noteFilter.type === 'folder' ? noteFilter.value : null
 
   return (

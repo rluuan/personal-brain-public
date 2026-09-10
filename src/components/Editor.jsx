@@ -21,10 +21,10 @@ const noteFontKey = (id) => `personal-brain-note-font-${id}`
 const noteHideKey = (id) => `personal-brain-hidden-${id}`
 
 export default function Editor({ onImport, showNotification, revealInExplorer }) {
-  const { 
-    getActiveNote, updateNote, notes, openTabs, 
+  const {
+    getActiveNote, updateNote, notes, openTabs,
     closeTab, setActiveNote, activeNoteId, settings,
-    user, exportNotesAsMd, folders
+    user, exportNotesAsMd, folders, getAllStatuses
   } = useNotesStore()
   
   const activeNote = getActiveNote()
@@ -494,6 +494,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
         mode={mode}
         setMode={setMode}
         onStatusChange={(status) => updateNote(activeNote.id, { status })}
+        statuses={getAllStatuses()}
       />
 
       {showEditor && (

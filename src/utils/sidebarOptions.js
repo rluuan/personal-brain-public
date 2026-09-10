@@ -22,6 +22,17 @@ export const STATUS_OPTIONS = [
   { id: 'abandonado',  label: 'Abandonado',  color: '#f38ba8' },
 ]
 
-export function getStatusInfo(statusId) {
-  return STATUS_OPTIONS.find((s) => s.id === statusId) || null
+export function getStatusInfo(statusId, statusList = STATUS_OPTIONS) {
+  return statusList.find((s) => s.id === statusId) || null
+}
+
+const DIACRITICS_RE = new RegExp('[̀-ͯ]', 'g')
+
+export function slugifyStatus(label) {
+  return label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(DIACRITICS_RE, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '') || `status_${Date.now()}`
 }

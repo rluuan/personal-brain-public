@@ -1,5 +1,6 @@
 import { dbSaveSettings } from '../../db/database'
 import { apiService } from '../../services/apiService'
+import { slugifyStatus, FOLDER_COLORS } from '../../utils/sidebarOptions'
 
 export const createSettingsSlice = (set, get) => ({
   settings: { 
@@ -48,5 +49,18 @@ export const createSettingsSlice = (set, get) => ({
     const { settings, saveSettings } = get()
     const tagColors = { ...(settings.extra?.tagColors || {}), [tag]: color }
     await saveSettings({ ...settings, extra: { ...settings.extra, tagColors } })
+  },
+
+  addCustomStatus: async (label, color) => {
+    const { settings, saveSettings, getAllStatuses } = get()
+    const trimmed = label.trim()
+    if (!trimmed) return null
+    const existing = getAllStatuses()
+    let id = slugifyStatus(trimmed)
+    if (existing.some((s) => s.id === id)) id = `${id}_${Date.now()}`
+    const newStatus = { id, label: trimmed, color: color || FOLDER_COLORS[existing.length % FOLDER_COLORS.length] }
+    const customStatuses = [...(settings.extra?.customStatuses || []), newStatus]
+    await saveSettings({ ...settings, extra: { ...settings.extra, customStatuses } })
+    return id
   },
 })

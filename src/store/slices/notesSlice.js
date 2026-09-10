@@ -2,6 +2,7 @@ import { dbCreateNote, dbUpdateNote, dbDeleteNote } from '../../db/database'
 import { encryptText, decryptText, isEncrypted, localStorageKey } from '../../crypto'
 import { ACTIVE_NOTE_KEY, OPEN_TABS_KEY } from '../utils'
 import { getLinks, extractTags } from '../../utils/markdownUtils'
+import { STATUS_OPTIONS } from '../../utils/sidebarOptions'
 import { dailyNoteService } from '../../services/dailyNoteService'
 import { apiService } from '../../services/apiService'
 
@@ -11,10 +12,12 @@ export const createNotesSlice = (set, get) => ({
   openTabs: [],       // ordered array of note IDs currently open as tabs
   encryptionKey: null, // raw passphrase — never leaves the browser
   noteFilter: { type: 'all', value: null }, // navegação da coluna de notas: 'all' | 'folder' | 'status' | 'tag'
+  showBoard: false, // painel Kanban (App.jsx troca NoteListColumn+Editor pelo board)
 
   setNotes: (notes) => set({ notes }),
   setEncryptionKeyData: (key) => set({ encryptionKey: key }),
-  setNoteFilter: (type, value = null) => set({ noteFilter: { type, value } }),
+  setNoteFilter: (type, value = null) => set({ noteFilter: { type, value }, showBoard: false }),
+  setShowBoard: (show) => set({ showBoard: show }),
 
   getFilteredNotes: () => {
     const { notes, noteFilter } = get()
@@ -22,6 +25,11 @@ export const createNotesSlice = (set, get) => ({
     if (noteFilter.type === 'status') return notes.filter((n) => n.status === noteFilter.value)
     if (noteFilter.type === 'tag') return notes.filter((n) => extractTags(n.content).includes(noteFilter.value))
     return notes
+  },
+
+  getAllStatuses: () => {
+    const { settings } = get()
+    return [...STATUS_OPTIONS, ...(settings.extra?.customStatuses || [])]
   },
 
   getAllTags: () => {

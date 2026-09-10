@@ -1,5 +1,5 @@
 import { Edit3, Network, MessageSquare } from 'lucide-react'
-import { STATUS_OPTIONS, getStatusInfo } from '../../utils/sidebarOptions'
+import { getStatusInfo } from '../../utils/sidebarOptions'
 
 const MODES = [
   { id: 'edit',       icon: Edit3,     label: 'Editar',   title: 'Editor' },
@@ -8,9 +8,9 @@ const MODES = [
   { id: 'chat',       icon: MessageSquare, label: 'Chat', title: 'Editor + Preview + Chat' },
 ]
 
-export function EditorHeader({ activeNote, mode, setMode, onStatusChange }) {
+export function EditorHeader({ activeNote, mode, setMode, onStatusChange, statuses = [] }) {
   if (!activeNote) return null
-  const statusInfo = getStatusInfo(activeNote.status)
+  const statusInfo = getStatusInfo(activeNote.status, statuses)
 
   return (
     <div
@@ -42,7 +42,7 @@ export function EditorHeader({ activeNote, mode, setMode, onStatusChange }) {
           title="Status da nota"
         >
           <option value="">Sem status</option>
-          {STATUS_OPTIONS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          {statuses.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
         </select>
       </div>
 

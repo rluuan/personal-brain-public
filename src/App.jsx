@@ -6,6 +6,7 @@ import {
 import ParticleBackground from './components/ParticleBackground'
 import Sidebar from './components/Sidebar'
 import NoteListColumn from './components/NoteListColumn'
+import BoardView from './components/BoardView'
 import Editor from './components/Editor'
 import SearchModal from './components/SearchModal'
 import NicknameModal from './components/NicknameModal'
@@ -239,7 +240,7 @@ export default function App() {
     setNotification({ msg, type, onAction, actionLabel })
   }
 
-  const { load, loading, user, loginUser, settings, createNote, encryptionKey, setEncryptionKey, notes, checkNovidades, activeNoteId } = useNotesStore()
+  const { load, loading, user, loginUser, settings, createNote, encryptionKey, setEncryptionKey, notes, checkNovidades, activeNoteId, showBoard } = useNotesStore()
 
   // Mobile: pick a filter → mostra lista de notas; escolher uma nota → mostra editor
   useEffect(() => {
@@ -252,6 +253,10 @@ export default function App() {
   useEffect(() => {
     if (isMobile && mobileNoteListOpen) setMobileNoteListOpen(false)
   }, [activeNoteId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isMobile && showBoard) { setMobileSidebarOpen(false); setMobileNoteListOpen(false) }
+  }, [showBoard, isMobile])
 
   // Apply theme CSS variables whenever settings change
   useEffect(() => {
@@ -467,40 +472,48 @@ export default function App() {
           </button>
         )}
 
-        {/* ── Nota List Column ── */}
-        {isMobile ? (
-          <div className={`mobile-sidebar-drawer ${mobileNoteListOpen ? 'open' : ''}`}>
-            <NoteListColumn />
+        {showBoard ? (
+          <div className={`flex-1 overflow-hidden ${isMobile ? 'editor-main-area' : ''}`}>
+            <BoardView />
           </div>
         ) : (
-          <div style={{ width: noteListWidth, flexShrink: 0 }}>
-            <NoteListColumn />
-          </div>
-        )}
+          <>
+            {/* ── Nota List Column ── */}
+            {isMobile ? (
+              <div className={`mobile-sidebar-drawer ${mobileNoteListOpen ? 'open' : ''}`}>
+                <NoteListColumn />
+              </div>
+            ) : (
+              <div style={{ width: noteListWidth, flexShrink: 0 }}>
+                <NoteListColumn />
+              </div>
+            )}
 
-        {!isMobile && (
-          <div
-            onMouseDown={onMouseDownNoteList}
-            style={{
-              width: 4,
-              flexShrink: 0,
-              cursor: 'col-resize',
-              background: '#313244',
-              transition: 'background 0.15s',
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
-            onMouseOut={(e)  => (e.currentTarget.style.background = '#313244')}
-          />
-        )}
+            {!isMobile && (
+              <div
+                onMouseDown={onMouseDownNoteList}
+                style={{
+                  width: 4,
+                  flexShrink: 0,
+                  cursor: 'col-resize',
+                  background: '#313244',
+                  transition: 'background 0.15s',
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
+                onMouseOut={(e)  => (e.currentTarget.style.background = '#313244')}
+              />
+            )}
 
-        {/* ── Editor ── */}
-        <div className={`flex-1 overflow-hidden ${isMobile ? 'editor-main-area' : ''}`}>
-          <Editor
-            onImport={openImport}
-            showNotification={showNotification}
-            revealInExplorer={revealInExplorer}
-          />
-        </div>
+            {/* ── Editor ── */}
+            <div className={`flex-1 overflow-hidden ${isMobile ? 'editor-main-area' : ''}`}>
+              <Editor
+                onImport={openImport}
+                showNotification={showNotification}
+                revealInExplorer={revealInExplorer}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── Mobile bottom nav ── */}

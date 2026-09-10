@@ -35,7 +35,7 @@ function sortByOrder(folders, order) {
 
 export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLiveMemoryHistory }) {
   const store = useNotesStore()
-  const { notes, folders, createNote, createFolder, getAllTags, user, logout, openDailyNote, noteFilter, setNoteFilter, settings, setTagColor } = store
+  const { notes, folders, createNote, createFolder, getAllTags, getAllStatuses, user, logout, openDailyNote, noteFilter, setNoteFilter, settings, setTagColor, showBoard, setShowBoard } = store
   
   const [folderOrder, setFolderOrder] = useState(loadFolderOrder)
   const [showMetrics, setShowMetrics] = useState(false)
@@ -177,8 +177,11 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
 
         <StatusSection
           notes={notes}
+          statuses={getAllStatuses()}
           activeFilter={noteFilter}
           onSelect={(statusId) => setNoteFilter(statusId ? 'status' : 'all', statusId)}
+          onOpenBoard={() => setShowBoard(true)}
+          boardActive={showBoard}
         />
 
         <TagsSection

@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
-import { ChevronDown, ChevronRight, CircleDot } from 'lucide-react'
-import { STATUS_OPTIONS } from '../../utils/sidebarOptions'
+import { ChevronDown, ChevronRight, CircleDot, LayoutDashboard } from 'lucide-react'
 
-export function StatusSection({ notes, activeFilter, onSelect }) {
+export function StatusSection({ notes, statuses, activeFilter, onSelect, onOpenBoard, boardActive }) {
   const [open, setOpen] = useState(true)
 
   return (
@@ -14,7 +13,7 @@ export function StatusSection({ notes, activeFilter, onSelect }) {
       </button>
       {open && (
         <div className="flex flex-col gap-0.5 px-1 pb-1">
-          {STATUS_OPTIONS.map((status) => {
+          {statuses.map((status) => {
             const count = notes.filter((n) => n.status === status.id).length
             const isActive = activeFilter?.type === 'status' && activeFilter.value === status.id
             return (
@@ -30,6 +29,14 @@ export function StatusSection({ notes, activeFilter, onSelect }) {
               </button>
             )
           })}
+          <button
+            onClick={onOpenBoard}
+            className="flex items-center gap-1.5 px-2 py-1 mt-1 rounded text-xs transition-all"
+            style={boardActive ? { background: 'rgba(49,49,85,0.7)' } : {}}
+          >
+            <LayoutDashboard size={12} className="flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
+            <span className={`flex-1 text-left ${boardActive ? 'text-ui-accent font-semibold' : 'text-ui-text'}`}>Quadro</span>
+          </button>
         </div>
       )}
     </div>
