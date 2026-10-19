@@ -39,6 +39,12 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const [contentHidden, setContentHidden] = useState(false)
   const [noteFont, setNoteFont] = useState('Inter')
   const [showSpeech, setShowSpeech] = useState(false)
+  const [zoom, setZoom] = useState(() => parseInt(localStorage.getItem('personal-brain-zoom') || '100', 10))
+
+  const changeZoom = (pct) => {
+    setZoom(pct)
+    localStorage.setItem('personal-brain-zoom', String(pct))
+  }
 
   const { extension: langExt, isMarkdown } = getLanguageMetadata(activeNote?.title)
 
@@ -47,6 +53,9 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
   const saveTimeout = useRef(null)
   // Tracks latest (unfolded) content without triggering re-renders (used by diagram saves)
   const latestContentRef = useRef('')
+  // Evita que o eco do save (assíncrono) sobrescreva edição mais nova feita enquanto ele estava em voo
+  const editGenRef  = useRef(0)
+  const savedGenRef = useRef(0)
 
   useEffect(() => { localStorage.setItem('editor-mode', mode) }, [mode])
 
@@ -56,12 +65,16 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     const val = activeNote.content || ''
     if (activeNote.id !== lastNoteId.current) {
       lastNoteId.current = activeNote.id
+      editGenRef.current = 0
+      savedGenRef.current = 0
       latestContentRef.current = val
       setPreviewContent(val)
       setEditorValue(collapseImages(collapseAllDiagrams(val)))
       setContentHidden(localStorage.getItem(noteHideKey(activeNote.id)) === '1')
       setNoteFont(localStorage.getItem(noteFontKey(activeNote.id)) || 'Inter')
-    } else if (latestContentRef.current !== val) {
+    } else if (editGenRef.current === savedGenRef.current && latestContentRef.current !== val) {
+      // Só resincroniza com o que veio do store se não houver edição local mais nova ainda não salva
+      // (senão o eco do nosso próprio save pode sobrescrever o que o usuário já digitou depois, resetando o cursor)
       latestContentRef.current = val
       setPreviewContent(val)
       setEditorValue(collapseImages(collapseAllDiagrams(val)))
@@ -125,9 +138,14 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     // Mantém editorValue em dia — se o editor remontar (troca de vim mode/fonte), o valor inicial precisa ser o atual, não o do último load da nota
     setEditorValue(rawContent)
 
+    editGenRef.current += 1
+    const thisGen = editGenRef.current
+
     clearTimeout(saveTimeout.current)
-    saveTimeout.current = setTimeout(() => {
-      if (activeNote) updateNote(activeNote.id, { content })
+    saveTimeout.current = setTimeout(async () => {
+      if (activeNote) await updateNote(activeNote.id, { content })
+      // Só marca como "salvo" se nenhuma edição mais nova aconteceu enquanto o save estava em voo
+      if (thisGen === editGenRef.current) savedGenRef.current = thisGen
     }, 600)
 
     const info = vimEditorRef.current?.getCursorAndDoc()
@@ -234,7 +252,11 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
               setAiProgress({ chunk: evt.chunk, total: evt.total })
             } else if (evt.type === 'done') {
               const newVal = applyContent(evt.content)
-              updateNote(activeNote.id, { content: newVal })
+              editGenRef.current += 1
+              const thisGen = editGenRef.current
+              updateNote(activeNote.id, { content: newVal }).then(() => {
+                if (thisGen === editGenRef.current) savedGenRef.current = thisGen
+              })
               setAiStatus('done')
               setShowBalloons(true)
             }
@@ -263,9 +285,12 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
         setPreviewContent(baseContent)
         setEditorValue(collapseImages(collapseAllDiagrams(baseContent)))
         latestContentRef.current = baseContent
+        editGenRef.current += 1
+        const thisGen = editGenRef.current
         clearTimeout(saveTimeout.current)
-        saveTimeout.current = setTimeout(() => {
-          updateNote(activeNote.id, { content: baseContent })
+        saveTimeout.current = setTimeout(async () => {
+          await updateNote(activeNote.id, { content: baseContent })
+          if (thisGen === editGenRef.current) savedGenRef.current = thisGen
         }, 500)
     }
 
@@ -337,15 +362,9 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
       } catch { /* usa dataUrl inline */ }
 
       const fullMd = `\n![${altId}](${finalUrl})\n`
-      const newContent = latestContentRef.current + fullMd
-      latestContentRef.current = newContent
-      setPreviewContent(newContent)
+      // insertText dispara uma transação real no CM6, que já aciona handleEditorChange
+      // (atualiza latestContentRef/previewContent/editorValue e agenda o save com tracking de geração)
       vimEditorRef.current?.insertText(fullMd)
-
-      clearTimeout(saveTimeout.current)
-      saveTimeout.current = setTimeout(() => {
-        if (activeNote) updateNote(activeNote.id, { content: newContent })
-      }, 300)
     }
     reader.readAsDataURL(file)
   }
@@ -362,9 +381,12 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     latestContentRef.current = newContent
     setPreviewContent(newContent)
     setEditorValue(collapseImages(collapseAllDiagrams(newContent)))
+    editGenRef.current += 1
+    const thisGen = editGenRef.current
     clearTimeout(saveTimeout.current)
-    saveTimeout.current = setTimeout(() => {
-      if (activeNote) updateNote(activeNote.id, { content: newContent })
+    saveTimeout.current = setTimeout(async () => {
+      if (activeNote) await updateNote(activeNote.id, { content: newContent })
+      if (thisGen === editGenRef.current) savedGenRef.current = thisGen
     }, 300)
   }
 
@@ -519,6 +541,8 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
           contentHidden={contentHidden}
           noteFont={noteFont}
           onNoteFontChange={changeNoteFont}
+          zoom={zoom}
+          onZoomChange={changeZoom}
           onInsertDiagram={insertDiagram}
           onInsertImage={handleInsertImage}
           onInsertColor={insertColor}
@@ -549,6 +573,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                 value={editorValue}
                 vimMode={vimMode}
                 font={noteFont}
+                zoom={zoom}
                 vimrc={settings?.extra?.vimrc || ''}
                 language={langExt}
                 wikiKeyHandlerRef={wikiKeyHandlerRef}

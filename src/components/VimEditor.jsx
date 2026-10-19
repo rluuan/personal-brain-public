@@ -16,10 +16,16 @@ const smartIndentCompartment  = new Compartment()
 const languageCompartment     = new Compartment()
 const scrollMarginCompartment = new Compartment()
 const wrapCompartment         = new Compartment()
+const zoomCompartment         = new Compartment()
+
+const BASE_FONT_SIZE = 14
+function zoomTheme(zoomPct) {
+  const px = Math.round(BASE_FONT_SIZE * ((zoomPct || 100) / 100) * 100) / 100
+  return EditorView.theme({ '&': { fontSize: `${px}px` } })
+}
 
 const appTheme = EditorView.theme({
   '&': {
-    fontSize: '14px',
     background: 'transparent',
     color: '#cdd6f4',
     display: 'flex',
@@ -108,7 +114,7 @@ function initVimOptions() {
   Vim.defineOption('incsearch',     false,  'boolean', ['is'],  noop)
 }
 
-const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language, wikiKeyHandlerRef, vimMode = false, onLineClick }, ref) {
+const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language, wikiKeyHandlerRef, vimMode = false, onLineClick, zoom = 100 }, ref) {
   const containerRef  = useRef(null)
   const viewRef       = useRef(null)
   const lastValueRef  = useRef(value)
@@ -299,6 +305,7 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
         keymap.of([indentWithTab]),
         
         appTheme,
+        zoomCompartment.of(zoomTheme(zoom)),
         wrapCompartment.of(EditorView.lineWrapping),
         scrollPastEnd(),
 
@@ -349,6 +356,10 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
   }, [font])
 
   useEffect(() => {
+    if (viewRef.current) viewRef.current.dispatch({ effects: zoomCompartment.reconfigure(zoomTheme(zoom)) })
+  }, [zoom])
+
+  useEffect(() => {
     if (viewRef.current && language) {
         viewRef.current.dispatch({ effects: languageCompartment.reconfigure(language) })
     }
@@ -366,7 +377,13 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
     if (current !== value) {
       suppressRef.current = true
       lastValueRef.current = value
-      view.dispatch({ changes: { from: 0, to: current.length, insert: value } })
+      // Replace de documento inteiro perde a posição do cursor por padrão (vai pro topo).
+      // Mantém a posição anterior (limitada ao novo tamanho) em vez de resetar pra 0.
+      const newPos = Math.min(view.state.selection.main.head, value.length)
+      view.dispatch({
+        changes: { from: 0, to: current.length, insert: value },
+        selection: { anchor: newPos },
+      })
       suppressRef.current = false
     }
   }, [value])

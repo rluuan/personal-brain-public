@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Heading1, Heading2, Bold, Italic, Strikethrough, Code, Link2, Hash,
   List, ListOrdered, CheckSquare, Quote, Minus, Table, Sparkles, StopCircle,
-  Upload, Download, EyeOff, Eye, Type, Workflow, Mic, Image, Palette
+  Upload, Download, EyeOff, Eye, Type, Workflow, Mic, Image, Palette, ZoomIn
 } from 'lucide-react'
 
 const PRESET_COLORS = [
@@ -97,10 +97,12 @@ export const NOTE_FONTS = [
   'Inter', 'Roboto', 'JetBrains Mono', 'Fira Code', 'Merriweather', 'IBM Plex Mono',
 ]
 
+export const ZOOM_LEVELS = [80, 90, 100, 110, 120, 130, 150, 175, 200]
+
 export function EditorToolbar({
   onInsert, onImport, onExport, onAiFormat, onToggleHide, onToggleSpeech,
   aiStatus, aiProgress, aiTranslate, setAiTranslate, onCancelAi,
-  contentHidden, noteFont, onNoteFontChange,
+  contentHidden, noteFont, onNoteFontChange, zoom, onZoomChange,
   onInsertDiagram, onInsertImage, onInsertColor
 }) {
   return (
@@ -233,6 +235,20 @@ export function EditorToolbar({
           style={{ background: 'rgba(37,37,53,0.5)', color: '#a6adc8', border: '1px solid #313244', fontFamily: `'${noteFont}', sans-serif` }}
         >
           {NOTE_FONTS.map(f => <option key={f} value={f} style={{ fontFamily: `'${f}', sans-serif` }}>{f}</option>)}
+        </select>
+      </div>
+
+      {/* Zoom */}
+      <div className="relative flex items-center">
+        <ZoomIn size={11} className="absolute left-1.5 text-ui-muted pointer-events-none" />
+        <select
+          value={zoom}
+          onChange={(e) => onZoomChange(parseInt(e.target.value, 10))}
+          title="Zoom do editor"
+          className="pl-5 pr-1 py-1 rounded text-[10px] outline-none appearance-none cursor-pointer"
+          style={{ background: 'rgba(37,37,53,0.5)', color: '#a6adc8', border: '1px solid #313244' }}
+        >
+          {ZOOM_LEVELS.map((z) => <option key={z} value={z}>{z}%</option>)}
         </select>
       </div>
 
