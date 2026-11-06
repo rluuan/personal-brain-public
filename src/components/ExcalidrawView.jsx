@@ -34,7 +34,7 @@ export default function ExcalidrawView({ data, onSave }) {
   }, [])
 
   return (
-    <div className="my-4 rounded-2xl overflow-hidden border border-[#313244] shadow-2xl" style={{ height: 550 }}>
+    <div className="my-4 rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-2xl" style={{ height: 550 }}>
       <Excalidraw
         excalidrawAPI={setExcalidrawAPI}
         initialData={{

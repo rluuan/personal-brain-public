@@ -4,7 +4,7 @@ import { Brain } from 'lucide-react'
 export function MemoryTab({ handleExportNotes, exporting, exportMsg, notes, primary }) {
   return (
     <div className="space-y-4">
-      <div className="rounded-lg p-3" style={{ background: '#252535', border: '1px solid #313244' }}>
+      <div className="rounded-lg p-3" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
         <div className="flex items-center gap-2 mb-2">
           <Brain size={13} className="text-ui-accent" />
           <span className="text-xs font-semibold text-ui-text">Exportar Memória</span>
@@ -33,7 +33,7 @@ export function MemoryTab({ handleExportNotes, exporting, exportMsg, notes, prim
         </div>
       )}
 
-      <div className="rounded-lg p-3" style={{ background: '#252535', border: '1px solid #313244' }}>
+      <div className="rounded-lg p-3" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
         <p className="text-[10px] text-ui-muted leading-relaxed">
           💡 Esta funcionalidade é útil para backups manuais ou para fornecer conhecimento para ferramentas de RAG externas.
         </p>

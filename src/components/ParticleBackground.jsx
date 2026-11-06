@@ -4,6 +4,19 @@ const PARTICLE_COUNT = 80
 const CONNECTION_DIST = 130
 const SPEED = 0.4
 
+function hexToRgb(hex) {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim())
+  return m ? `${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)}` : '203,166,247'
+}
+
+function readThemeRgb() {
+  const style = getComputedStyle(document.documentElement)
+  return {
+    primary: hexToRgb(style.getPropertyValue('--color-primary') || '#cba6f7'),
+    secondary: hexToRgb(style.getPropertyValue('--color-secondary') || '#89b4fa'),
+  }
+}
+
 export default function ParticleBackground() {
   const canvasRef = useRef(null)
 
@@ -16,6 +29,9 @@ export default function ParticleBackground() {
     let height = window.innerHeight
     let mouse = { x: -9999, y: -9999 }
     let animId
+    let themeRgb = readThemeRgb()
+    const themeObserver = new MutationObserver(() => { themeRgb = readThemeRgb() })
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
 
     canvas.width = width
     canvas.height = height
@@ -93,7 +109,7 @@ export default function ParticleBackground() {
             ctx.beginPath()
             ctx.moveTo(a.x, a.y)
             ctx.lineTo(b.x, b.y)
-            ctx.strokeStyle = `rgba(203,166,247,${alpha})`
+            ctx.strokeStyle = `rgba(${themeRgb.primary},${alpha})`
             ctx.lineWidth = 0.6
             ctx.stroke()
           }
@@ -110,7 +126,7 @@ export default function ParticleBackground() {
           ctx.beginPath()
           ctx.moveTo(p.x, p.y)
           ctx.lineTo(mouse.x, mouse.y)
-          ctx.strokeStyle = `rgba(137,180,250,${alpha})`
+          ctx.strokeStyle = `rgba(${themeRgb.secondary},${alpha})`
           ctx.lineWidth = 0.8
           ctx.stroke()
         }
@@ -120,7 +136,7 @@ export default function ParticleBackground() {
       particles.forEach((p) => {
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(203,166,247,${p.opacity})`
+        ctx.fillStyle = `rgba(${themeRgb.primary},${p.opacity})`
         ctx.fill()
       })
 
@@ -133,6 +149,7 @@ export default function ParticleBackground() {
       cancelAnimationFrame(animId)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('resize', onResize)
+      themeObserver.disconnect()
     }
   }, [])
 
@@ -144,7 +161,7 @@ export default function ParticleBackground() {
         inset: 0,
         zIndex: 0,
         pointerEvents: 'none',
-        background: '#0d0d1a',
+        background: 'var(--color-app-bg)',
       }}
     />
   )

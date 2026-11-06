@@ -78,11 +78,11 @@ export default function SearchModal({ onClose }) {
     >
       <div
         className="w-full max-w-xl rounded-xl shadow-2xl overflow-hidden fade-in"
-        style={{ background: '#252535', border: '1px solid #313244' }}
+        style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Input */}
-        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid #313244' }}>
+        <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <Search size={16} className="text-ui-muted" />
           <input
             ref={inputRef}
@@ -95,7 +95,7 @@ export default function SearchModal({ onClose }) {
         </div>
 
         {/* Scope filters */}
-        <div className="flex items-center gap-4 px-4 py-2" style={{ borderBottom: '1px solid #313244', background: '#1e1e2e' }}>
+        <div className="flex items-center gap-4 px-4 py-2" style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg)' }}>
           <span className="text-xs text-ui-muted">Buscar em:</span>
           <label className="flex items-center gap-1.5 text-xs text-ui-muted cursor-pointer">
             <input type="checkbox" checked={searchNotes} onChange={e => setSearchNotes(e.target.checked)}
@@ -116,7 +116,7 @@ export default function SearchModal({ onClose }) {
             <>
               {searchLiveMemories && (
                 <div className="px-4 py-1.5 text-xs text-ui-muted font-semibold"
-                  style={{ background: '#1e1e2e', borderBottom: '1px solid #313244' }}>
+                  style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
                   Notas ({noteResults.length})
                 </div>
               )}
@@ -125,7 +125,7 @@ export default function SearchModal({ onClose }) {
                   key={note.id}
                   onClick={() => handleSelect(note.id)}
                   className="w-full text-left px-4 py-3 hover:bg-ui-hover transition-colors"
-                  style={{ borderBottom: '1px solid #1e1e2e' }}
+                  style={{ borderBottom: '1px solid var(--color-bg)' }}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <FileText size={13} className="text-ui-accent flex-shrink-0" />
@@ -143,7 +143,7 @@ export default function SearchModal({ onClose }) {
           {searchLiveMemories && liveResults.length > 0 && (
             <>
               <div className="px-4 py-1.5 text-xs text-ui-muted font-semibold"
-                style={{ background: '#1e1e2e', borderBottom: '1px solid #313244' }}>
+                style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
                 Live Memories ({liveResults.length})
               </div>
               {liveResults.map(mem => (
@@ -151,7 +151,7 @@ export default function SearchModal({ onClose }) {
                   key={mem.id}
                   onClick={() => { window.open(mem.url, '_blank', 'noopener'); onClose() }}
                   className="w-full text-left px-4 py-3 hover:bg-ui-hover transition-colors"
-                  style={{ borderBottom: '1px solid #1e1e2e' }}
+                  style={{ borderBottom: '1px solid var(--color-bg)' }}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <Link size={13} className="text-blue-400 flex-shrink-0" />
@@ -172,7 +172,7 @@ export default function SearchModal({ onClose }) {
           )}
         </div>
 
-        <div className="px-4 py-2 text-ui-muted text-xs" style={{ borderTop: '1px solid #313244' }}>
+        <div className="px-4 py-2 text-ui-muted text-xs" style={{ borderTop: '1px solid var(--color-border)' }}>
           {totalResults} resultado{totalResults !== 1 ? 's' : ''} · ESC para fechar
         </div>
       </div>

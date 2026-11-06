@@ -49,7 +49,7 @@ export function NoteItem({ note, isActive, onSelect, onDelete, onRename, autoEdi
         />
       ) : (
         <><span className="flex-1 truncate">{note.title}</span>
-        <span style={{ fontSize: 9, color: '#6c7086', fontFamily: 'monospace', flexShrink: 0 }}>{getNoteExt(note.title)}</span></>
+        <span style={{ fontSize: 9, color: 'var(--color-muted)', fontFamily: 'monospace', flexShrink: 0 }}>{getNoteExt(note.title)}</span></>
 
       )}
       {isHidden && <EyeOff size={10} className="flex-shrink-0 opacity-40" title="Nota oculta" />}

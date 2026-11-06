@@ -21,7 +21,7 @@ function TagColorPicker({ tag, color, onChange }) {
       {open && (
         <div
           className="absolute top-full left-0 mt-1 z-50 grid grid-cols-8 gap-1 rounded-lg p-2 shadow-xl"
-          style={{ background: 'rgba(25,25,40,0.98)', border: '1px solid #45475a', minWidth: 150 }}
+          style={{ background: 'rgba(var(--color-panel-rgb),0.98)', border: '1px solid var(--color-border-strong)', minWidth: 150 }}
         >
           {FOLDER_COLORS.map((c) => (
             <button
@@ -43,7 +43,7 @@ export function TagsSection({ tags, tagColors = {}, activeFilter, onSelect, onCo
   if (!tags || tags.length === 0) return null
 
   return (
-    <div className="mt-2 pt-2" style={{ borderTop: '1px solid #313244' }}>
+    <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
       <button onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 w-full px-2 py-1 text-ui-muted text-xs uppercase tracking-wider hover:text-ui-text transition-colors rounded">
         {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}

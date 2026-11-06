@@ -24,7 +24,7 @@ function PieChart({ slices, size = 160, label }) {
         d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`}
         fill={sl.color}
         opacity={0.88}
-        stroke="#1e1e2e"
+        stroke="var(--color-bg)"
         strokeWidth={1.5}
       >
         <title>{sl.label}: {sl.value} ({Math.round((sl.value / total) * 100)}%)</title>
@@ -38,7 +38,7 @@ function PieChart({ slices, size = 160, label }) {
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {paths}
         {/* Center hole */}
-        <circle cx={cx} cy={cy} r={r * 0.42} fill="#1e1e2e" />
+        <circle cx={cx} cy={cy} r={r * 0.42} fill="var(--color-bg)" />
       </svg>
       {/* Legend */}
       <div className="flex flex-col gap-1 w-full">
@@ -77,9 +77,9 @@ function BarChart({ bars, label, color = 'var(--color-primary)', height = 110 })
             <g key={i}>
               <rect x={x} y={y} width={barW} height={barH} rx={3} fill={color} opacity={0.8} />
               {b.value > 0 && (
-                <text x={x + barW / 2} y={y - 3} textAnchor="middle" fontSize={8} fill="#cdd6f4">{b.value}</text>
+                <text x={x + barW / 2} y={y - 3} textAnchor="middle" fontSize={8} fill="var(--color-text)">{b.value}</text>
               )}
-              <text x={x + barW / 2} y={height + 14} textAnchor="middle" fontSize={8} fill="#6c7086">{b.label}</text>
+              <text x={x + barW / 2} y={height + 14} textAnchor="middle" fontSize={8} fill="var(--color-muted)">{b.label}</text>
             </g>
           )
         })}
@@ -91,7 +91,7 @@ function BarChart({ bars, label, color = 'var(--color-primary)', height = 110 })
 // ── Stat Card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, sub, color = 'var(--color-primary)' }) {
   return (
-    <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: '#252535', border: '1px solid #313244' }}>
+    <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
       <div className="flex items-center gap-2 mb-1">
         <div className="p-1.5 rounded-lg" style={{ background: `${color}20` }}>
           <Icon size={13} style={{ color }} />
@@ -176,7 +176,7 @@ export default function MetricsModal({ onClose }) {
     // Pie: tags vs sem tags
     const tagsPie = [
       { label: 'Com tags',  value: withTags,              color: primary },
-      { label: 'Sem tags',  value: notes.length - withTags, color: '#313244' },
+      { label: 'Sem tags',  value: notes.length - withTags, color: 'var(--color-border)' },
     ].filter(s => s.value > 0)
 
     // Pie: notas por pasta (max 6 fatias)
@@ -198,10 +198,10 @@ export default function MetricsModal({ onClose }) {
     >
       <div
         className="rounded-2xl shadow-2xl w-full fade-in flex flex-col"
-        style={{ background: '#1e1e2e', border: '1px solid #313244', maxWidth: 820, maxHeight: '90vh' }}
+        style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', maxWidth: 820, maxHeight: '90vh' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #313244' }}>
+        <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl" style={{ background: `${primary}20` }}>
               <TrendingUp size={16} style={{ color: primary }} />
@@ -237,17 +237,17 @@ export default function MetricsModal({ onClose }) {
           {/* ── Charts row ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Pizza: notas por pasta */}
-            <div className="rounded-xl p-4" style={{ background: '#252535', border: '1px solid #313244' }}>
+            <div className="rounded-xl p-4" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
               <PieChart slices={metrics.folderPie} size={150} label="Notas por pasta" />
             </div>
 
             {/* Pizza: com/sem tags */}
-            <div className="rounded-xl p-4" style={{ background: '#252535', border: '1px solid #313244' }}>
+            <div className="rounded-xl p-4" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
               <PieChart slices={metrics.tagsPie} size={150} label="Notas com tags" />
             </div>
 
             {/* Atividade da semana */}
-            <div className="rounded-xl p-4" style={{ background: '#252535', border: '1px solid #313244' }}>
+            <div className="rounded-xl p-4" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
               <BarChart
                 bars={metrics.weekBars}
                 label={`Atividade da semana — total: ${metrics.weekBars.reduce((s, b) => s + b.value, 0)}`}
@@ -258,7 +258,7 @@ export default function MetricsModal({ onClose }) {
           </div>
 
           {/* ── Notas por mês ── */}
-          <div className="rounded-xl p-4" style={{ background: '#252535', border: '1px solid #313244' }}>
+          <div className="rounded-xl p-4" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
             <BarChart
               bars={metrics.monthlyBars}
               label={`Notas criadas por mês — últimos 6 meses — total: ${metrics.monthlyBars.reduce((s, b) => s + b.value, 0)}`}

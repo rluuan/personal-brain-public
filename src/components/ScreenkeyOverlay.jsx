@@ -93,7 +93,7 @@ export default function ScreenkeyOverlay() {
               display: 'inline-block',
               background: 'rgba(30, 30, 46, 0.92)',
               border: '1px solid rgba(69, 71, 90, 0.6)',
-              color: '#cdd6f4',
+              color: 'var(--color-text)',
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: 14,
               fontWeight: 600,

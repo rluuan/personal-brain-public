@@ -15,10 +15,10 @@ export function WikiSuggest({ suggest, onApply, onClose }) {
         className="rounded-lg overflow-hidden shadow-2xl fade-in"
         style={hasCursor ? {
           position: 'absolute',
-          left: Math.min(suggest.x, window.innerWidth - 380),
-          top: Math.min(suggest.y, window.innerHeight - 260),
-          background: 'rgba(25,25,40,0.98)',
-          border: '1px solid #45475a',
+          left: Math.max(8, Math.min(suggest.x, window.innerWidth - 380)),
+          top: Math.max(8, Math.min(suggest.y, window.innerHeight - 260)),
+          background: 'rgba(var(--color-panel-rgb),0.98)',
+          border: '1px solid var(--color-border-strong)',
           minWidth: 220,
           maxWidth: 360,
         } : {
@@ -26,8 +26,8 @@ export function WikiSuggest({ suggest, onApply, onClose }) {
           left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
-          background: 'rgba(25,25,40,0.98)',
-          border: '1px solid #45475a',
+          background: 'rgba(var(--color-panel-rgb),0.98)',
+          border: '1px solid var(--color-border-strong)',
           minWidth: 260,
           maxWidth: 380,
         }}

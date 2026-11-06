@@ -176,7 +176,7 @@ export default function ChatPanel() {
     <div className="flex flex-col h-full" style={{ background: 'rgba(14,14,26,0.4)' }}>
       {/* Header */}
       <div className="flex items-center px-4 py-2 flex-shrink-0"
-        style={{ borderBottom: '1px solid #313244', background: 'rgba(22,22,34,0.5)' }}>
+        style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(22,22,34,0.5)' }}>
         <span className="text-ui-text text-sm font-medium">💬 Chat</span>
       </div>
 
@@ -191,8 +191,8 @@ export default function ChatPanel() {
               className="max-w-[80%] rounded-xl px-4 py-2.5 text-sm fade-in"
               style={{
                 background: msg.role === 'user' ? 'rgba(137,180,250,0.12)' : 'rgba(37,37,53,0.5)',
-                border: `1px solid ${msg.role === 'user' ? 'rgba(137,180,250,0.25)' : '#313244'}`,
-                color: '#cdd6f4',
+                border: `1px solid ${msg.role === 'user' ? 'rgba(137,180,250,0.25)' : 'var(--color-border)'}`,
+                color: 'var(--color-text)',
                 whiteSpace: 'pre-wrap',
                 lineHeight: 1.65,
                 wordBreak: 'break-word',
@@ -223,7 +223,7 @@ export default function ChatPanel() {
           <div className="flex justify-start">
             <span className="mr-2 mt-1 text-ui-muted flex-shrink-0" style={{ fontSize: 16 }}>⬡</span>
             <div className="rounded-xl px-4 py-2.5 text-xs ai-pulse"
-              style={{ background: 'rgba(37,37,53,0.5)', border: '1px solid #313244', color: '#89b4fa' }}>
+              style={{ background: 'rgba(37,37,53,0.5)', border: '1px solid var(--color-border)', color: '#89b4fa' }}>
               🔍 Buscando{rag ? ' nas notas' : ''}{ragLiveMemory ? ' nos links' : ''}{claudeProject ? ` em "${claudeProject}"` : ''}…
             </div>
           </div>
@@ -233,7 +233,7 @@ export default function ChatPanel() {
       </div>
 
       {/* Input */}
-      <div className="px-4 py-3 flex-shrink-0" style={{ borderTop: '1px solid #313244' }}>
+      <div className="px-4 py-3 flex-shrink-0" style={{ borderTop: '1px solid var(--color-border)' }}>
         <div className="flex gap-2 items-end">
           <textarea
             ref={inputRef}
@@ -247,9 +247,9 @@ export default function ChatPanel() {
             rows={2}
             className="flex-1 px-3 py-2 rounded-lg text-sm outline-none resize-none"
             style={{
-              background: '#252535',
-              border: '1px solid #45475a',
-              color: '#cdd6f4',
+              background: 'var(--color-panel)',
+              border: '1px solid var(--color-border-strong)',
+              color: 'var(--color-text)',
               fontFamily: 'inherit',
               lineHeight: 1.5,
             }}
@@ -259,10 +259,10 @@ export default function ChatPanel() {
             <label
               className="flex items-center gap-1 text-[10px] cursor-pointer select-none transition-colors px-2 py-1 rounded-lg"
               style={{
-                color: rag ? '#89b4fa' : '#585b70',
+                color: rag ? '#89b4fa' : 'var(--color-scrollbar)',
                 background: rag ? 'rgba(137,180,250,0.08)' : 'transparent',
                 border: '1px solid',
-                borderColor: rag ? 'rgba(137,180,250,0.25)' : '#313244',
+                borderColor: rag ? 'rgba(137,180,250,0.25)' : 'var(--color-border)',
               }}
               title="Busca trechos relevantes das suas notas como contexto"
             >
@@ -274,10 +274,10 @@ export default function ChatPanel() {
             <label
               className="flex items-center gap-1 text-[10px] cursor-pointer select-none transition-colors px-2 py-1 rounded-lg"
               style={{
-                color: ragLiveMemory ? '#60a5fa' : '#585b70',
+                color: ragLiveMemory ? '#60a5fa' : 'var(--color-scrollbar)',
                 background: ragLiveMemory ? 'rgba(96,165,250,0.08)' : 'transparent',
                 border: '1px solid',
-                borderColor: ragLiveMemory ? 'rgba(96,165,250,0.25)' : '#313244',
+                borderColor: ragLiveMemory ? 'rgba(96,165,250,0.25)' : 'var(--color-border)',
               }}
               title="Inclui links visitados como contexto da resposta"
             >
@@ -293,10 +293,10 @@ export default function ChatPanel() {
                   onClick={() => setShowProjectMenu(v => !v)}
                   className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-lg transition-colors w-full"
                   style={{
-                    color: claudeProject ? '#c4b5fd' : '#585b70',
+                    color: claudeProject ? '#c4b5fd' : 'var(--color-scrollbar)',
                     background: claudeProject ? 'rgba(167,139,250,0.08)' : 'transparent',
                     border: '1px solid',
-                    borderColor: claudeProject ? 'rgba(167,139,250,0.35)' : '#313244',
+                    borderColor: claudeProject ? 'rgba(167,139,250,0.35)' : 'var(--color-border)',
                   }}
                   title="Usar memória de um projeto Claude"
                 >
@@ -342,8 +342,8 @@ export default function ChatPanel() {
               disabled={streaming || !input.trim()}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
               style={{
-                background: (streaming || !input.trim()) ? '#313244' : '#89b4fa',
-                color: (streaming || !input.trim()) ? '#585b70' : '#1e1e2e',
+                background: (streaming || !input.trim()) ? 'var(--color-border)' : '#89b4fa',
+                color: (streaming || !input.trim()) ? 'var(--color-scrollbar)' : 'var(--color-bg)',
                 height: 42,
               }}
             >

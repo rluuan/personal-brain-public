@@ -9,9 +9,9 @@ export function AITab({ aiModel, setAiModel, embedModel, setEmbedModel, ollamaSt
         <input type="text" value={aiModel} onChange={(e) => setAiModel(e.target.value)}
           placeholder="Ex: gemma3:12b"
           className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-          style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4', caretColor: primary }}
+          style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)', caretColor: primary }}
           onFocus={(e) => (e.target.style.borderColor = primary)} 
-          onBlur={(e) => (e.target.style.borderColor = '#45475a')} 
+          onBlur={(e) => (e.target.style.borderColor = 'var(--color-border-strong)')} 
         />
       </div>
       <div>
@@ -19,13 +19,13 @@ export function AITab({ aiModel, setAiModel, embedModel, setEmbedModel, ollamaSt
         <input type="text" value={embedModel} onChange={(e) => setEmbedModel(e.target.value)}
           placeholder="Ex: nomic-embed-text"
           className="w-full px-3 py-2 rounded-lg text-xs outline-none"
-          style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4', caretColor: primary }}
+          style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)', caretColor: primary }}
           onFocus={(e) => (e.target.style.borderColor = primary)} 
-          onBlur={(e) => (e.target.style.borderColor = '#45475a')} 
+          onBlur={(e) => (e.target.style.borderColor = 'var(--color-border-strong)')} 
         />
       </div>
 
-      <div className="pt-1" style={{ borderTop: '1px solid #313244' }}>
+      <div className="pt-1" style={{ borderTop: '1px solid var(--color-border)' }}>
         <div className="flex items-center gap-2 mb-2">
           <label className="block text-[10px] text-ui-muted uppercase">Testar conexão Ollama</label>
         </div>

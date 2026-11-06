@@ -12,7 +12,7 @@ export default function BacklinksPanel({ noteTitle }) {
   return (
     <div
       className="flex-shrink-0"
-      style={{ borderTop: '1px solid #313244', background: '#1a1a2e' }}
+      style={{ borderTop: '1px solid var(--color-border)', background: '#1a1a2e' }}
     >
       <button
         onClick={() => setOpen(!open)}
@@ -31,7 +31,7 @@ export default function BacklinksPanel({ noteTitle }) {
               key={note.id}
               onClick={() => setActiveNote(note.id)}
               className="text-ui-blue text-xs px-2 py-1 rounded hover:bg-ui-hover transition-colors border"
-              style={{ borderColor: '#313244' }}
+              style={{ borderColor: 'var(--color-border)' }}
             >
               ⬡ {note.title}
             </button>

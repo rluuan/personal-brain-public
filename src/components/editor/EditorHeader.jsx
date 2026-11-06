@@ -15,7 +15,7 @@ export function EditorHeader({ activeNote, mode, setMode, onStatusChange, status
   return (
     <div
       className="flex items-center justify-between px-4 py-2 flex-shrink-0"
-      style={{ borderBottom: '1px solid #313244', background: 'rgba(22,22,34,0.5)' }}
+      style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(22,22,34,0.5)' }}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className="flex items-center gap-2 min-w-0">
@@ -36,8 +36,8 @@ export function EditorHeader({ activeNote, mode, setMode, onStatusChange, status
           className="px-2 py-0.5 rounded-md text-[10px] outline-none cursor-pointer flex-shrink-0"
           style={{
             background: statusInfo ? `${statusInfo.color}22` : 'rgba(37,37,53,0.6)',
-            color: statusInfo ? statusInfo.color : '#a6adc8',
-            border: `1px solid ${statusInfo ? `${statusInfo.color}55` : '#45475a'}`,
+            color: statusInfo ? statusInfo.color : 'var(--color-muted-2)',
+            border: `1px solid ${statusInfo ? `${statusInfo.color}55` : 'var(--color-border-strong)'}`,
           }}
           title="Status da nota"
         >

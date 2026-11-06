@@ -5,7 +5,7 @@ import {
 
 export const FOLDER_COLORS = [
   '#f38ba8', '#fab387', '#f9e2af', '#a6e3a1',
-  '#89b4fa', '#cba6f7', '#f5c2e7', '#a6adc8',
+  '#89b4fa', '#cba6f7', '#f5c2e7', 'var(--color-muted-2)',
 ]
 
 export const FOLDER_ICONS = {

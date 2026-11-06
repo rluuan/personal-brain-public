@@ -4,6 +4,7 @@ import { html } from '@codemirror/lang-html'
 import { css } from '@codemirror/lang-css'
 import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
+import { Table } from '@lezer/markdown'
 import { sql } from '@codemirror/lang-sql'
 import { rust } from '@codemirror/lang-rust'
 import { cpp } from '@codemirror/lang-cpp'
@@ -34,12 +35,12 @@ const EXT_MAP = {
   'yaml': { lang: yaml, alias: 'yaml' },
   'yml':  { lang: yaml, alias: 'yaml' },
   'xml':  { lang: xml, alias: 'xml' },
-  'md':   { lang: markdown, alias: 'markdown' },
+  'md':   { lang: () => markdown({ extensions: [Table] }), alias: 'markdown' },
 }
 
 export function getLanguageMetadata(filename = '') {
   const ext = filename.split('.').pop()?.toLowerCase() || 'md'
-  const found = EXT_MAP[ext] || { lang: markdown, alias: 'markdown' }
+  const found = EXT_MAP[ext] || { lang: () => markdown({ extensions: [Table] }), alias: 'markdown' }
   
   // Some lang functions take options, others don't.
   // We normalize them here.

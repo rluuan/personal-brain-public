@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import { EditorView, keymap, lineNumbers, drawSelection, highlightActiveLine, scrollPastEnd } from '@codemirror/view'
-import { EditorState, Compartment } from '@codemirror/state'
+import { EditorState, Compartment, Prec } from '@codemirror/state'
 import { indentUnit, indentOnInput } from '@codemirror/language'
 import { indentWithTab, history } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
+import { Table } from '@lezer/markdown'
 import { vim, Vim, getCM } from '@replit/codemirror-vim'
 import { markdownLivePreview, livePreviewTheme } from './editor/livePreview'
 
@@ -18,6 +19,16 @@ const scrollMarginCompartment = new Compartment()
 const wrapCompartment         = new Compartment()
 const zoomCompartment         = new Compartment()
 
+// Dispatches programáticos de seleção (fora do fluxo normal de digitação) confundem o
+// rastreamento de modo do codemirror-vim, derrubando pro modo NORMAL sem avisar.
+// Força de volta pro INSERT quando isso acontece, senão "/" e outras teclas viram comandos vim.
+function ensureVimInsertMode(view) {
+  const cm = getCM(view)
+  if (cm?.state?.vim && !cm.state.vim.insertMode) {
+    Vim.handleKey(cm, 'i', 'mapping')
+  }
+}
+
 const BASE_FONT_SIZE = 14
 function zoomTheme(zoomPct) {
   const px = Math.round(BASE_FONT_SIZE * ((zoomPct || 100) / 100) * 100) / 100
@@ -27,7 +38,7 @@ function zoomTheme(zoomPct) {
 const appTheme = EditorView.theme({
   '&': {
     background: 'transparent',
-    color: '#cdd6f4',
+    color: 'var(--color-text)',
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
@@ -39,23 +50,23 @@ const appTheme = EditorView.theme({
   '.cm-activeLine': { backgroundColor: 'rgba(203,166,247,0.04)' },
   '.cm-gutters': {
     background: 'rgba(14,14,26,0.85)',
-    borderRight: '1px solid #313244',
-    color: '#45475a',
+    borderRight: '1px solid var(--color-border)',
+    color: 'var(--color-border-strong)',
     userSelect: 'none',
   },
   '.cm-lineNumbers .cm-gutterElement': { padding: '0 10px 0 6px', minWidth: '36px', textAlign: 'right' },
   '.cm-panels': { background: '#181825' },
-  '.cm-panels-bottom': { borderTop: '1px solid #45475a' },
+  '.cm-panels-bottom': { borderTop: '1px solid var(--color-border-strong)' },
   '.cm-vim-panel': {
     background: '#181825',
-    color: '#cdd6f4',
+    color: 'var(--color-text)',
     padding: '2px 10px',
     fontSize: '13px',
     fontFamily: "'JetBrains Mono', monospace",
   },
   '.cm-vim-panel input': {
     background: 'transparent',
-    color: '#cdd6f4',
+    color: 'var(--color-text)',
     outline: 'none',
     border: 'none',
     fontSize: '13px',
@@ -114,12 +125,13 @@ function initVimOptions() {
   Vim.defineOption('incsearch',     false,  'boolean', ['is'],  noop)
 }
 
-const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language, wikiKeyHandlerRef, vimMode = false, onLineClick, zoom = 100 }, ref) {
+const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onCloseTab, font, vimrc, language, wikiKeyHandlerRef, vimMode = false, onLineClick, onCursorActivity, zoom = 100 }, ref) {
   const containerRef  = useRef(null)
   const viewRef       = useRef(null)
   const lastValueRef  = useRef(value)
   const onSaveRef     = useRef(onSave)
   const onLineClickRef = useRef(onLineClick)
+  const onCursorActivityRef = useRef(onCursorActivity)
   const suppressRef   = useRef(false)
   const [mode, setMode] = useState('NORMAL')
   const [status, setStatus] = useState(null)
@@ -127,6 +139,7 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
 
   useEffect(() => { onSaveRef.current = onSave }, [onSave])
   useEffect(() => { onLineClickRef.current = onLineClick }, [onLineClick])
+  useEffect(() => { onCursorActivityRef.current = onCursorActivity }, [onCursorActivity])
   if (vimMode) initVimOptions()
 
   const showStatus = (msg) => {
@@ -180,6 +193,24 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
         changes: { from: openIdx, to: from, insert: replacement },
         selection: { anchor: openIdx + replacement.length },
       })
+      ensureVimInsertMode(view)
+      view.focus()
+    },
+    // Substitui "/query" (desde a barra até o cursor) pelo before+after do comando escolhido
+    applySlashCommand: (before = '', after = '') => {
+      const view = viewRef.current
+      if (!view) return
+      const { from } = view.state.selection.main
+      const lineStart = view.state.doc.lineAt(from).from
+      const lineText = view.state.sliceDoc(lineStart, from)
+      const match = lineText.match(/\/(\w*)$/)
+      if (!match) return
+      const slashStart = lineStart + lineText.length - match[0].length
+      view.dispatch({
+        changes: { from: slashStart, to: from, insert: before + after },
+        selection: { anchor: slashStart + before.length },
+      })
+      ensureVimInsertMode(view)
       view.focus()
     },
     getCursorAndDoc: () => {
@@ -195,6 +226,26 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
       if (!cursorEl) return null
       const rect = cursorEl.getBoundingClientRect()
       return { x: rect.left, y: rect.bottom + 4 }
+    },
+    // Coordenadas pra ancorar algo ACIMA da linha atual (ex: toolbar de tabela)
+    getCursorTopPosition: () => {
+      const view = viewRef.current
+      if (!view) return null
+      const cursorEl = view.dom.querySelector('.cm-cursor')
+      if (!cursorEl) return null
+      const rect = cursorEl.getBoundingClientRect()
+      return { x: rect.left, bottom: rect.top - 4 }
+    },
+    // Substitui um range arbitrário de texto (usado pela edição de tabela)
+    replaceRange: (from, to, text, cursorOffset) => {
+      const view = viewRef.current
+      if (!view) return
+      view.dispatch({
+        changes: { from, to, insert: text },
+        selection: { anchor: from + (cursorOffset ?? text.length) },
+      })
+      ensureVimInsertMode(view)
+      view.focus()
     },
   }))
 
@@ -294,12 +345,14 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
         }),
 
         // Wiki suggest keyboard interception — only active when wikiKeyHandlerRef.current is set
-        keymap.of([
+        // Prec.highest: senão o keymap de continuação de lista do markdown() rouba o Enter
+        // quando o cursor está dentro de um item de lista (ex: "- [ ] /table")
+        Prec.highest(keymap.of([
           { key: 'ArrowDown', run: () => { if (wikiKeyHandlerRef?.current?.('ArrowDown')) return true; return false } },
           { key: 'ArrowUp',   run: () => { if (wikiKeyHandlerRef?.current?.('ArrowUp'))   return true; return false } },
           { key: 'Enter',     run: () => { if (wikiKeyHandlerRef?.current?.('Enter'))     return true; return false } },
           { key: 'Escape',    run: () => { if (wikiKeyHandlerRef?.current?.('Escape'))    return true; return false } },
-        ]),
+        ])),
 
         // Tab indentation
         keymap.of([indentWithTab]),
@@ -309,7 +362,7 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
         wrapCompartment.of(EditorView.lineWrapping),
         scrollPastEnd(),
 
-        languageCompartment.of(language || markdown()),
+        languageCompartment.of(language || markdown({ extensions: [Table] })),
         lineNumbersCompartment.of([]),
         cursorLineCompartment.of([]),
         scrollMarginCompartment.of([]),
@@ -326,6 +379,9 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
             const newVal = update.state.doc.toString()
             lastValueRef.current = newVal
             onChange(newVal)
+          }
+          if ((update.docChanged || update.selectionSet) && !suppressRef.current) {
+            onCursorActivityRef.current?.()
           }
         }),
       ],
@@ -388,7 +444,7 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
     }
   }, [value])
 
-  const modeColor = MODE_COLOR[mode] || '#a6adc8'
+  const modeColor = MODE_COLOR[mode] || 'var(--color-muted-2)'
 
   return (<div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', position: 'relative' }}>
         {status && (
@@ -404,14 +460,14 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
       {vimMode && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-          padding: '6px 14px', background: 'rgba(14,14,26,0.95)', borderBottom: '1px solid #1e1e2e',
+          padding: '6px 14px', background: 'rgba(14,14,26,0.95)', borderBottom: '1px solid var(--color-bg)',
         }}>
           <span style={{
             fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
-            letterSpacing: '0.08em', color: '#1e1e2e', background: modeColor,
+            letterSpacing: '0.08em', color: 'var(--color-bg)', background: modeColor,
             padding: '2px 10px', borderRadius: 3, transition: 'background 0.1s',
           }}>{mode}</span>
-          <span style={{ fontSize: 13, color: '#585b70', fontFamily: "'JetBrains Mono', monospace" }}>
+          <span style={{ fontSize: 13, color: 'var(--color-scrollbar)', fontFamily: "'JetBrains Mono', monospace" }}>
             i · inserir &nbsp;|&nbsp; Esc · normal &nbsp;|&nbsp; :w · salvar &nbsp;|&nbsp; :set number
           </span>
         </div>

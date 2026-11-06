@@ -31,8 +31,8 @@ export default function NoteListColumn() {
   const newNoteFolderId = noteFilter.type === 'folder' ? noteFilter.value : null
 
   return (
-    <div className="flex flex-col h-full" style={{ borderRight: '1px solid #313244' }}>
-      <div className="flex items-center justify-between gap-2 px-3 py-2.5 flex-shrink-0" style={{ borderBottom: '1px solid #313244' }}>
+    <div className="flex flex-col h-full" style={{ borderRight: '1px solid var(--color-border)' }}>
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <div className="flex items-center gap-1.5 min-w-0">
           <Icon size={13} className="flex-shrink-0" style={{ color: color || 'var(--color-primary)' }} />
           <span className="text-ui-text text-xs font-semibold truncate">{label}</span>

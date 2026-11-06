@@ -18,7 +18,7 @@ export function ClaudeMemoryTab({ trackClaudeMemory, setTrackClaudeMemory, prima
     <>
       {/* Toggle principal */}
       <div className="rounded-lg px-4 py-3 flex items-center justify-between gap-4"
-        style={{ background: '#252535', border: '1px solid #313244' }}>
+        style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-xs text-ui-text font-medium">
             <Brain size={12} style={{ color: '#a78bfa' }} />
@@ -33,18 +33,18 @@ export function ClaudeMemoryTab({ trackClaudeMemory, setTrackClaudeMemory, prima
           className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
             background: trackClaudeMemory ? '#a78bfa26' : 'rgba(69,71,90,0.4)',
-            border: `1px solid ${trackClaudeMemory ? '#a78bfa' : '#45475a'}`,
-            color: trackClaudeMemory ? '#a78bfa' : '#6c7086',
+            border: `1px solid ${trackClaudeMemory ? '#a78bfa' : 'var(--color-border-strong)'}`,
+            color: trackClaudeMemory ? '#a78bfa' : 'var(--color-muted)',
             minWidth: 64,
           }}
         >
-          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: trackClaudeMemory ? '#a78bfa' : '#45475a', flexShrink: 0 }} />
+          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: trackClaudeMemory ? '#a78bfa' : 'var(--color-border-strong)', flexShrink: 0 }} />
           {trackClaudeMemory ? 'ON' : 'OFF'}
         </button>
       </div>
 
       {/* Explicação conceitual */}
-      <div className="rounded-lg p-4 space-y-4" style={{ background: '#0d0d1a', border: '1px solid #a78bfa22' }}>
+      <div className="rounded-lg p-4 space-y-4" style={{ background: 'var(--color-app-bg)', border: '1px solid #a78bfa22' }}>
         <div className="flex items-center gap-2 mb-1">
           <Brain size={13} style={{ color: '#a78bfa' }} />
           <span className="text-xs font-semibold" style={{ color: '#c4b5fd' }}>Como funciona</span>

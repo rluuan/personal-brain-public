@@ -75,6 +75,38 @@ function buildDecorations(view) {
         }
 
         if (type === 'QuoteMark') { mark(node.from, node.to, 'cm-live-quote'); return }
+
+        if (type === 'Table') {
+          const fromLine = state.doc.lineAt(node.from).number
+          const toLine = state.doc.lineAt(node.to).number
+          for (let ln = fromLine; ln <= toLine; ln++) {
+            const docLine = state.doc.line(ln)
+            const text = docLine.text
+            const touchesLine = selectionTouches(state, docLine.from, docLine.to)
+            const trimStart = text.length - text.trimStart().length
+            const trimEnd = text.trimEnd().length
+            const pipePositions = []
+            for (let i = 0; i < text.length; i++) if (text[i] === '|') pipePositions.push(i)
+
+            const isBorder = (i) => i === trimStart || i === trimEnd - 1
+            pipePositions.forEach((i) => {
+              if (isBorder(i)) {
+                if (!touchesLine) hide(docLine.from + i, docLine.from + i + 1)
+              } else {
+                mark(docLine.from + i, docLine.from + i + 1, 'cm-live-table-pipe')
+              }
+            })
+
+            const isDelimRow = ln === fromLine + 1
+            const rowClass = ln === fromLine
+              ? 'cm-live-table-header'
+              : isDelimRow
+                ? (touchesLine ? 'cm-live-table-delim-edit' : 'cm-live-table-delim')
+                : 'cm-live-table-row'
+            line(docLine.from, rowClass)
+          }
+          return
+        }
       },
     })
   }
@@ -118,9 +150,14 @@ export const livePreviewTheme = EditorView.baseTheme({
     padding: '0 4px',
     color: '#f5c2e7',
   },
-  '.cm-live-quote': { color: '#6c7086' },
+  '.cm-live-quote': { color: 'var(--color-muted)' },
   '.cm-live-list-d1': { color: '#89b4fa', fontWeight: '700' },
   '.cm-live-list-d2': { color: '#a6e3a1', fontWeight: '700' },
   '.cm-live-list-d3': { color: '#f9e2af', fontWeight: '700' },
   '.cm-live-list-d4': { color: '#cba6f7', fontWeight: '700' },
+  '.cm-live-table-pipe': { color: 'rgba(166,173,200,0.35)' },
+  '.cm-live-table-header': { fontWeight: '700', borderBottom: '1px solid rgba(255,255,255,0.12)' },
+  '.cm-live-table-delim': { color: 'transparent', fontSize: '1px', lineHeight: '4px' },
+  '.cm-live-table-delim-edit': { opacity: '0.4' },
+  '.cm-live-table-row': { borderBottom: '1px solid rgba(255,255,255,0.06)' },
 })

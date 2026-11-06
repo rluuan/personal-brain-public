@@ -5,7 +5,7 @@ export function StatusSection({ notes, statuses, activeFilter, onSelect, onOpenB
   const [open, setOpen] = useState(true)
 
   return (
-    <div className="mt-2 pt-2" style={{ borderTop: '1px solid #313244' }}>
+    <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
       <button onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 w-full px-2 py-1 text-ui-muted text-xs uppercase tracking-wider hover:text-ui-text transition-colors rounded">
         {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}

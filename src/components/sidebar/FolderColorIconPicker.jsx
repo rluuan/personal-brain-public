@@ -27,7 +27,7 @@ export function FolderColorIconPicker({ folder, onChange }) {
       {open && (
         <div
           className="absolute top-full left-0 mt-1 z-50 rounded-lg p-2 shadow-xl"
-          style={{ background: 'rgba(25,25,40,0.98)', border: '1px solid #45475a', minWidth: 170 }}
+          style={{ background: 'rgba(var(--color-panel-rgb),0.98)', border: '1px solid var(--color-border-strong)', minWidth: 170 }}
         >
           <div className="text-[9px] text-ui-muted uppercase tracking-wider mb-1 px-0.5">Cor</div>
           <div className="grid grid-cols-8 gap-1 mb-2">
@@ -51,7 +51,7 @@ export function FolderColorIconPicker({ folder, onChange }) {
                   key={name}
                   onClick={() => onChange({ icon: active ? null : name })}
                   className="w-4 h-4 flex items-center justify-center rounded hover:bg-ui-hover transition-colors"
-                  style={{ color: active ? (folder.color || 'var(--color-primary)') : '#a6adc8', background: active ? 'rgba(255,255,255,0.08)' : 'transparent' }}
+                  style={{ color: active ? (folder.color || 'var(--color-primary)') : 'var(--color-muted-2)', background: active ? 'rgba(255,255,255,0.08)' : 'transparent' }}
                   title={name}
                 >
                   <Icon size={11} />

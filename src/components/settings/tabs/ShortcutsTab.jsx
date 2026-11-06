@@ -34,13 +34,13 @@ export function ShortcutsTab({ primary }) {
           </div>
           <div className="space-y-1.5">
             {items.map(({ keys, desc }) => (
-              <div key={desc} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#252535', border: '1px solid #313244' }}>
+              <div key={desc} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
                 <span className="text-xs text-ui-text">{desc}</span>
                 <div className="flex items-center gap-1 flex-shrink-0 ml-3">
                   {keys.map((k, i) => (
                     <React.Fragment key={k}>
                       {i > 0 && <span className="text-ui-muted text-[10px]">+</span>}
-                      <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold" style={{ background: '#1e1e2e', border: '1px solid #45475a', color: primary }}>{k}</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border-strong)', color: primary }}>{k}</kbd>
                     </React.Fragment>
                   ))}
                 </div>

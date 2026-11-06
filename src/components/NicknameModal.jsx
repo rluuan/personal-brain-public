@@ -24,7 +24,7 @@ export default function NicknameModal({ onConfirm }) {
     >
       <div
         className="w-full max-w-sm rounded-2xl p-8 fade-in text-center"
-        style={{ background: 'rgba(25,25,40,0.97)', border: '1px solid #313244', boxShadow: '0 0 60px rgba(203,166,247,0.15)' }}
+        style={{ background: 'rgba(var(--color-panel-rgb),0.97)', border: '1px solid var(--color-border)', boxShadow: '0 0 60px rgba(203,166,247,0.15)' }}
       >
         <div className="text-5xl mb-4">⬡</div>
         <h1 className="text-ui-text text-xl font-semibold mb-1">Bem-vindo ao {projectName}</h1>
@@ -43,11 +43,11 @@ export default function NicknameModal({ onConfirm }) {
           className="w-full px-4 py-3 rounded-lg text-ui-text text-sm outline-none mb-4"
           style={{
             background: 'rgba(49,49,68,0.8)',
-            border: '1px solid #45475a',
+            border: '1px solid var(--color-border-strong)',
             caretColor: '#cba6f7',
           }}
           onFocus={(e) => (e.target.style.borderColor = '#cba6f7')}
-          onBlur={(e) => (e.target.style.borderColor = '#45475a')}
+          onBlur={(e) => (e.target.style.borderColor = 'var(--color-border-strong)')}
         />
 
         <button
@@ -56,8 +56,8 @@ export default function NicknameModal({ onConfirm }) {
           className="w-full py-3 rounded-lg font-semibold text-sm transition-all"
           style={{
             background: name.trim() ? 'rgba(203,166,247,0.2)' : 'rgba(49,49,68,0.4)',
-            border: `1px solid ${name.trim() ? '#cba6f7' : '#313244'}`,
-            color: name.trim() ? '#cba6f7' : '#6c7086',
+            border: `1px solid ${name.trim() ? '#cba6f7' : 'var(--color-border)'}`,
+            color: name.trim() ? '#cba6f7' : 'var(--color-muted)',
             cursor: name.trim() ? 'pointer' : 'not-allowed',
           }}
         >

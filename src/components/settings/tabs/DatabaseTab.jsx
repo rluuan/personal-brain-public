@@ -23,9 +23,9 @@ export function DatabaseTab({
               onClick={() => setDbConfig(c => ({ ...c, dbType: type }))}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs transition-all"
               style={{
-                background: dbConfig.dbType === type ? 'rgba(203,166,247,0.15)' : '#252535',
-                border: `1px solid ${dbConfig.dbType === type ? primary : '#45475a'}`,
-                color: dbConfig.dbType === type ? primary : '#a6adc8',
+                background: dbConfig.dbType === type ? 'rgba(203,166,247,0.15)' : 'var(--color-panel)',
+                border: `1px solid ${dbConfig.dbType === type ? primary : 'var(--color-border-strong)'}`,
+                color: dbConfig.dbType === type ? primary : 'var(--color-muted-2)',
               }}>
               {type === 'postgres' ? <Database size={11} /> : <HardDrive size={11} />}
               {type === 'postgres' ? 'PostgreSQL' : 'SQLite'}
@@ -60,9 +60,9 @@ export function DatabaseTab({
                   onChange={(e) => setDbConfig(c => ({ ...c, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
                   className="w-full px-2 py-1.5 rounded text-xs outline-none"
-                  style={{ background: '#1e1e2e', border: '1px solid #45475a', color: '#cdd6f4' }}
+                  style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }}
                   onFocus={(e) => (e.target.style.borderColor = primary)} 
-                  onBlur={(e) => (e.target.style.borderColor = '#45475a')} 
+                  onBlur={(e) => (e.target.style.borderColor = 'var(--color-border-strong)')} 
                 />
               </div>
             ))}
@@ -79,14 +79,14 @@ export function DatabaseTab({
       {dbMsg && <p className="text-[10px] text-ui-muted px-1">{dbMsg}</p>}
 
       {/* Export */}
-      <div style={{ borderTop: '1px solid #313244', paddingTop: '1rem' }}>
+      <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
         <label className="block text-xs text-ui-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
           <Download size={11} /> Exportar & Backup
         </label>
          <div className="space-y-2">
           <button onClick={handleExportNotes} disabled={exporting}
             className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs transition-all"
-            style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }}>
+            style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }}>
             <FolderOpen size={13} className="text-ui-accent" />
             <div className="text-left">
               <div className="font-medium">Exportar notas como .md</div>
@@ -95,7 +95,7 @@ export function DatabaseTab({
           </button>
 
           <div className="flex flex-col gap-1">
-            <div className="flex bg-[#252535] border border-[#45475a] rounded-lg overflow-hidden h-[54px]">
+            <div className="flex bg-[var(--color-panel)] border border-[var(--color-border-strong)] rounded-lg overflow-hidden h-[54px]">
               <button onClick={handleExportDb} disabled={exporting}
                 className="flex-1 flex items-center gap-2 px-3 py-2 text-xs transition-all hover:bg-ui-hover">
                 <HardDrive size={13} className="text-ui-accent" />
@@ -104,7 +104,7 @@ export function DatabaseTab({
                   <div className="text-ui-muted text-[10px]">Total: {notes.length} notas</div>
                 </div>
               </button>
-              <div className="flex flex-col w-12 border-l border-[#45475a]">
+              <div className="flex flex-col w-12 border-l border-[var(--color-border-strong)]">
                 {['json', 'csv'].map(f => (
                   <button key={f}
                     onClick={() => setBackupFormat(f)}
@@ -112,8 +112,8 @@ export function DatabaseTab({
                     className="flex-1 text-[10px] font-bold uppercase transition-all"
                     style={{
                       background: backupFormat === f ? `${primary}20` : 'transparent',
-                      color: backupFormat === f ? primary : '#6c7086',
-                      borderTop: f === 'csv' ? '1px solid #45475a' : 'none'
+                      color: backupFormat === f ? primary : 'var(--color-muted)',
+                      borderTop: f === 'csv' ? '1px solid var(--color-border-strong)' : 'none'
                     }}>
                     {f}
                   </button>

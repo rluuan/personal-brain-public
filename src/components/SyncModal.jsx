@@ -174,7 +174,7 @@ export default function SyncModal({ onClose }) {
             <button
               onClick={handleSync}
               className="px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-all flex items-center gap-2"
-              style={{ background: '#89b4fa', color: '#1e1e2e' }}
+              style={{ background: '#89b4fa', color: 'var(--color-bg)' }}
             >
               <RefreshCw size={14} />
               Iniciar Sincronização

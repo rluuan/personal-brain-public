@@ -34,7 +34,7 @@ export function Notification({
       }`}
     >
       <div 
-        className="flex items-center gap-4 px-4 py-3 rounded-xl shadow-2xl border border-[#313244]"
+        className="flex items-center gap-4 px-4 py-3 rounded-xl shadow-2xl border border-[var(--color-border)]"
         style={{ 
           background: 'rgba(30, 30, 46, 0.95)', 
           backdropFilter: 'blur(10px)',
@@ -55,7 +55,7 @@ export function Notification({
         {onAction && (
           <button
             onClick={() => { onAction?.(); setVisible(false); setTimeout(onClose, 300) }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105 active:scale-95 bg-ui-accent text-[#1e1e2e]"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105 active:scale-95 bg-ui-accent text-[var(--color-bg)]"
           >
             <FolderOpen size={13} />
             {actionLabel}

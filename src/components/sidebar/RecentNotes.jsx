@@ -27,7 +27,7 @@ export function RecentNotes({ notes, activeNoteId, onSelect }) {
   if (recent.length === 0) return null
 
   return (
-    <div className="mt-0.5" style={{ borderTop: '1px solid #313244' }}>
+    <div className="mt-0.5" style={{ borderTop: '1px solid var(--color-border)' }}>
       <button onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1.5 w-full px-2 py-2 text-ui-muted text-xs uppercase tracking-wider hover:text-ui-text transition-colors">
         {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
@@ -46,7 +46,7 @@ export function RecentNotes({ notes, activeNoteId, onSelect }) {
               <div className="flex items-center gap-1.5 min-w-0">
                 <FileText size={10} className="flex-shrink-0 text-ui-muted" />
                 <span className="truncate">{note.title}</span>
-                <span style={{ fontSize: 9, color: '#45475a', fontFamily: 'monospace', flexShrink: 0 }}>{getNoteExt(note.title)}</span>
+                <span style={{ fontSize: 9, color: 'var(--color-border-strong)', fontFamily: 'monospace', flexShrink: 0 }}>{getNoteExt(note.title)}</span>
               </div>
               <span className="text-[10px] text-ui-muted flex-shrink-0">{timeAgo(note.updated_at)}</span>
             </div>

@@ -112,7 +112,7 @@ export default function LiveMemoryHistory({ onClose }) {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid #313244', background: '#161622' }}>
+        style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-sidebar)' }}>
         <div className="flex items-center gap-2">
           <Link size={16} className="text-blue-400" />
           <span className="text-ui-text text-sm font-semibold">Live Memory History</span>
@@ -125,9 +125,9 @@ export default function LiveMemoryHistory({ onClose }) {
 
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-6 py-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid #313244', background: '#1e1e2e' }}>
+        style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg)' }}>
         <div className="flex items-center gap-2 flex-1 max-w-sm px-3 py-1.5 rounded-lg"
-          style={{ background: '#252535', border: '1px solid #45475a' }}>
+          style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)' }}>
           <Search size={13} className="text-ui-muted" />
           <input
             value={query}
@@ -141,7 +141,7 @@ export default function LiveMemoryHistory({ onClose }) {
           <button
             onClick={handleDeleteSelected}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-red-400 hover:bg-red-900/20 transition-colors"
-            style={{ border: '1px solid #45475a' }}
+            style={{ border: '1px solid var(--color-border-strong)' }}
           >
             <Trash2 size={12} /> Deletar {selected.size} selecionado{selected.size > 1 ? 's' : ''}
           </button>
@@ -150,7 +150,7 @@ export default function LiveMemoryHistory({ onClose }) {
         <button
           onClick={handleExport}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg text-ui-muted hover:text-ui-text hover:bg-ui-hover transition-colors"
-          style={{ border: '1px solid #45475a' }}
+          style={{ border: '1px solid var(--color-border-strong)' }}
         >
           <Download size={12} /> Exportar
         </button>
@@ -160,7 +160,7 @@ export default function LiveMemoryHistory({ onClose }) {
       <div className="flex-1 overflow-auto">
         <table className="w-full text-xs" style={{ borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#1e1e2e', borderBottom: '1px solid #313244' }}>
+            <tr style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
               <th className="px-4 py-2 text-left w-8">
                 <input type="checkbox" checked={selected.size === items.length && items.length > 0}
                   onChange={toggleAll} className="accent-blue-500" />
@@ -185,7 +185,7 @@ export default function LiveMemoryHistory({ onClose }) {
             ) : items.map(mem => (
               <tr key={mem.id}
                 className="hover:bg-ui-hover/50 transition-colors"
-                style={{ borderBottom: '1px solid #1e1e2e' }}>
+                style={{ borderBottom: '1px solid var(--color-bg)' }}>
                 <td className="px-4 py-2.5">
                   <input type="checkbox" checked={selected.has(mem.id)}
                     onChange={() => toggleSelect(mem.id)} className="accent-blue-500" />
@@ -249,7 +249,7 @@ export default function LiveMemoryHistory({ onClose }) {
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-6 py-3 flex-shrink-0"
-        style={{ borderTop: '1px solid #313244', background: '#161622' }}>
+        style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-sidebar)' }}>
         <span className="text-xs text-ui-muted">
           {total} itens · Página {page} de {totalPages}
         </span>
@@ -274,7 +274,7 @@ export default function LiveMemoryHistory({ onClose }) {
       {/* URL tooltip */}
       {tooltip && (
         <div className="fixed z-[999] pointer-events-none px-3 py-1.5 rounded text-xs font-mono text-ui-muted"
-          style={{ left: tooltip.x + 10, top: tooltip.y - 30, background: '#1e1e2e', border: '1px solid #313244', maxWidth: 400 }}>
+          style={{ left: tooltip.x + 10, top: tooltip.y - 30, background: 'var(--color-bg)', border: '1px solid var(--color-border)', maxWidth: 400 }}>
           {tooltip.text}
         </div>
       )}

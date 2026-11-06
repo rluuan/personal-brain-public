@@ -53,7 +53,7 @@ export function ScraperPanel({ folders, onCreate }) {
 
   return (
     <>
-      <div className="mt-0.5" style={{ borderTop: '1px solid #313244' }}>
+      <div className="mt-0.5" style={{ borderTop: '1px solid var(--color-border)' }}>
         <button onClick={() => setOpen(o => !o)}
           className="flex items-center gap-1.5 w-full px-2 py-2 text-ui-muted text-xs uppercase tracking-wider hover:text-ui-text transition-colors">
           {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
@@ -68,14 +68,14 @@ export function ScraperPanel({ folders, onCreate }) {
                 onKeyDown={(e) => e.key === 'Enter' && openModal()}
                 placeholder="https://..."
                 className="w-full pl-6 pr-2 py-1.5 rounded text-xs outline-none"
-                style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }} />
+                style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }} />
             </div>
             <button onClick={openModal} disabled={!url.trim()}
               className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-all"
               style={{
                 background: url.trim() ? 'rgba(137,180,250,0.15)' : 'transparent',
-                border: `1px solid ${url.trim() ? 'var(--color-secondary)' : '#45475a'}`,
-                color: url.trim() ? 'var(--color-secondary)' : '#6c7086',
+                border: `1px solid ${url.trim() ? 'var(--color-secondary)' : 'var(--color-border-strong)'}`,
+                color: url.trim() ? 'var(--color-secondary)' : 'var(--color-muted)',
                 cursor: !url.trim() ? 'not-allowed' : 'pointer',
               }}>
               <Download size={11} /> Importar página
@@ -88,7 +88,7 @@ export function ScraperPanel({ folders, onCreate }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.65)' }}
           onClick={(e) => { if (e.target === e.currentTarget && !scraping) setModal(false) }}>
-          <div className="rounded-xl shadow-2xl p-5 w-full max-w-sm fade-in" style={{ background: '#1e1e2e', border: '1px solid #313244' }}>
+          <div className="rounded-xl shadow-2xl p-5 w-full max-w-sm fade-in" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-ui-text font-semibold text-sm flex items-center gap-2">
                 <Globe size={14} className="text-ui-accent" />Importar página
@@ -103,13 +103,13 @@ export function ScraperPanel({ folders, onCreate }) {
               disabled={scraping}
               onKeyDown={(e) => e.key === 'Enter' && handleImport()}
               className="w-full px-3 py-2 rounded-lg text-xs outline-none mb-3"
-              style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }} />
+              style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }} />
 
             <label className="block text-[10px] text-ui-muted uppercase mb-1">Pasta de destino</label>
             <select value={folderId} onChange={(e) => setFolderId(e.target.value)}
               disabled={scraping}
               className="w-full px-3 py-2 rounded-lg text-xs mb-4"
-              style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }}>
+              style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }}>
               <option value="">— Raiz (sem pasta) —</option>
               {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
@@ -118,11 +118,11 @@ export function ScraperPanel({ folders, onCreate }) {
 
             <div className="flex gap-2 justify-end">
               {!scraping && (
-                <button onClick={() => setModal(false)} className="px-3 py-1.5 rounded-lg text-xs text-ui-muted" style={{ background: '#313244' }}>Cancelar</button>
+                <button onClick={() => setModal(false)} className="px-3 py-1.5 rounded-lg text-xs text-ui-muted" style={{ background: 'var(--color-border)' }}>Cancelar</button>
               )}
               <button onClick={handleImport} disabled={scraping || !noteTitle.trim()}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={{ background: 'var(--color-secondary)', color: '#1e1e2e', opacity: (!noteTitle.trim() || scraping) ? 0.7 : 1 }}>
+                style={{ background: 'var(--color-secondary)', color: 'var(--color-bg)', opacity: (!noteTitle.trim() || scraping) ? 0.7 : 1 }}>
                 {scraping ? <><Loader2 size={11} className="animate-spin" /> Importando...</> : 'Importar'}
               </button>
             </div>

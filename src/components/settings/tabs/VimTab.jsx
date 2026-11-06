@@ -4,7 +4,7 @@ import { Terminal } from 'lucide-react'
 export function VimTab({ vimMode, setVimMode, vimrc, setVimrc }) {
   return (
     <>
-      <div className="rounded-lg p-4 space-y-3" style={{ background: '#252535', border: '1px solid #313244' }}>
+      <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
         <div className="flex items-center gap-2 text-ui-accent">
           <Terminal size={14} />
           <span className="text-xs font-semibold">Por que usar Vim?</span>
@@ -24,7 +24,7 @@ export function VimTab({ vimMode, setVimMode, vimrc, setVimrc }) {
         </div>
       </div>
 
-      <div className="rounded-lg px-4 py-3 flex items-center justify-between gap-4" style={{ background: '#252535', border: '1px solid #313244' }}>
+      <div className="rounded-lg px-4 py-3 flex items-center justify-between gap-4" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
         <div className="min-w-0">
           <div className="text-xs text-ui-text font-medium">Ativar Modo Vim</div>
           <div className="text-[10px] text-ui-muted mt-0.5">Habilita emulação Vim (NORMAL/INSERT) no editor.</div>
@@ -34,14 +34,14 @@ export function VimTab({ vimMode, setVimMode, vimrc, setVimrc }) {
           className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
             background: vimMode ? 'rgba(166,227,161,0.15)' : 'rgba(69,71,90,0.4)',
-            border: `1px solid ${vimMode ? '#a6e3a1' : '#45475a'}`,
-            color: vimMode ? '#a6e3a1' : '#6c7086',
+            border: `1px solid ${vimMode ? '#a6e3a1' : 'var(--color-border-strong)'}`,
+            color: vimMode ? '#a6e3a1' : 'var(--color-muted)',
             minWidth: 64,
           }}
         >
           <span style={{
             display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-            background: vimMode ? '#a6e3a1' : '#45475a',
+            background: vimMode ? '#a6e3a1' : 'var(--color-border-strong)',
             flexShrink: 0,
           }} />
           {vimMode ? 'ON' : 'OFF'}
@@ -49,7 +49,7 @@ export function VimTab({ vimMode, setVimMode, vimrc, setVimrc }) {
       </div>
 
       {vimMode && (
-        <div className="rounded-lg px-4 py-3 flex flex-col gap-2" style={{ background: '#252535', border: '1px solid #313244' }}>
+        <div className="rounded-lg px-4 py-3 flex flex-col gap-2" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
           <div className="text-xs text-ui-text font-medium">Configuração Vim (vimrc)</div>
           <div className="text-[10px] text-ui-muted">Comandos executados ao carregar. Ex: <span className="font-mono text-ui-accent">set number</span></div>
           <textarea
@@ -59,10 +59,10 @@ export function VimTab({ vimMode, setVimMode, vimrc, setVimrc }) {
             rows={5}
             spellCheck={false}
             style={{
-              background: '#1e1e2e',
-              border: '1px solid #313244',
+              background: 'var(--color-bg)',
+              border: '1px solid var(--color-border)',
               borderRadius: 6,
-              color: '#cdd6f4',
+              color: 'var(--color-text)',
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: 12,
               padding: '8px 10px',

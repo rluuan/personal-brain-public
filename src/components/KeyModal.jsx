@@ -35,9 +35,9 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
 
   const inputStyle = {
     background: 'rgba(49,49,68,0.8)',
-    border: '1px solid #45475a',
+    border: '1px solid var(--color-border-strong)',
     caretColor: '#cba6f7',
-    color: '#cdd6f4',
+    color: 'var(--color-text)',
   }
 
   return (
@@ -49,7 +49,7 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
         className="w-full max-w-sm rounded-2xl p-8 fade-in"
         style={{
           background: 'rgba(22,22,36,0.98)',
-          border: '1px solid #313244',
+          border: '1px solid var(--color-border)',
           boxShadow: '0 0 60px rgba(203,166,247,0.12)',
         }}
       >
@@ -71,7 +71,7 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
 
         {/* Mode tabs (only if no encrypted notes yet) */}
         {!hasEncryptedNotes && (
-          <div className="flex rounded-lg overflow-hidden mb-5" style={{ border: '1px solid #313244' }}>
+          <div className="flex rounded-lg overflow-hidden mb-5" style={{ border: '1px solid var(--color-border)' }}>
             {['create', 'enter'].map((m) => (
               <button
                 key={m}
@@ -79,8 +79,8 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
                 className="flex-1 py-2 text-xs font-medium transition-colors"
                 style={{
                   background: mode === m ? 'rgba(203,166,247,0.15)' : 'transparent',
-                  color: mode === m ? '#cba6f7' : '#6c7086',
-                  borderRight: m === 'create' ? '1px solid #313244' : 'none',
+                  color: mode === m ? '#cba6f7' : 'var(--color-muted)',
+                  borderRight: m === 'create' ? '1px solid var(--color-border)' : 'none',
                 }}
               >
                 {m === 'create' ? 'Nova chave' : 'Já tenho chave'}
@@ -101,7 +101,7 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
             className="w-full px-4 py-3 rounded-lg text-sm outline-none pr-10"
             style={inputStyle}
             onFocus={(e) => (e.target.style.borderColor = '#cba6f7')}
-            onBlur={(e)  => (e.target.style.borderColor = '#45475a')}
+            onBlur={(e)  => (e.target.style.borderColor = 'var(--color-border-strong)')}
           />
           <button
             type="button"
@@ -124,7 +124,7 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
             className="w-full px-4 py-3 rounded-lg text-sm outline-none mb-3"
             style={inputStyle}
             onFocus={(e) => (e.target.style.borderColor = '#cba6f7')}
-            onBlur={(e)  => (e.target.style.borderColor = '#45475a')}
+            onBlur={(e)  => (e.target.style.borderColor = 'var(--color-border-strong)')}
           />
         )}
 
@@ -156,8 +156,8 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
           className="w-full py-3 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
           style={{
             background: key.trim() ? 'rgba(203,166,247,0.2)' : 'rgba(49,49,68,0.4)',
-            border: `1px solid ${key.trim() ? '#cba6f7' : '#313244'}`,
-            color: key.trim() ? '#cba6f7' : '#6c7086',
+            border: `1px solid ${key.trim() ? '#cba6f7' : 'var(--color-border)'}`,
+            color: key.trim() ? '#cba6f7' : 'var(--color-muted)',
             cursor: key.trim() ? 'pointer' : 'not-allowed',
           }}
         >

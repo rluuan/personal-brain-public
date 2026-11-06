@@ -8,7 +8,7 @@ import {
 const PRESET_COLORS = [
   '#f38ba8', '#fab387', '#f9e2af', '#a6e3a1',
   '#89b4fa', '#cba6f7', '#f5c2e7', '#ffffff',
-  '#a6adc8', '#6c7086',
+  'var(--color-muted-2)', 'var(--color-muted)',
 ]
 
 function ColorPickerButton({ onInsertColor }) {
@@ -37,7 +37,7 @@ function ColorPickerButton({ onInsertColor }) {
       {open && (
         <div
           className="absolute top-full left-0 mt-1 z-50 rounded-lg p-2 shadow-xl"
-          style={{ background: 'rgba(25,25,40,0.98)', border: '1px solid #45475a', minWidth: 130 }}
+          style={{ background: 'rgba(var(--color-panel-rgb),0.98)', border: '1px solid var(--color-border-strong)', minWidth: 130 }}
         >
           <div className="grid grid-cols-5 gap-1 mb-1.5">
             {PRESET_COLORS.map((c) => (
@@ -108,18 +108,18 @@ export function EditorToolbar({
   return (
     <div
       className="flex items-center gap-0.5 px-3 py-1.5 flex-shrink-0 flex-wrap"
-      style={{ borderBottom: '1px solid #313244', background: 'rgba(25,25,40,0.5)' }}
+      style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(var(--color-panel-rgb),0.5)' }}
     >
       {FORMAT_GROUPS.map((group, gi) => (
         <React.Fragment key={gi}>
-          {gi > 0 && <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: '#313244' }} />}
+          {gi > 0 && <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: 'var(--color-border)' }} />}
           {group.map(({ icon: Icon, title, before, after, block, color }) => (
             <button
               key={title}
               onMouseDown={(e) => { e.preventDefault(); onInsert(before, after, block) }}
               title={title}
               className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-all hover:bg-ui-hover"
-              style={{ color: color || '#a6adc8' }}
+              style={{ color: color || 'var(--color-muted-2)' }}
             >
               <Icon size={14} />
             </button>
@@ -139,12 +139,12 @@ export function EditorToolbar({
       ))}
 
       {/* IA section */}
-      <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: '#313244' }} />
+      <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: 'var(--color-border)' }} />
       <label
         className="flex items-center gap-1 px-1.5 py-1 rounded text-xs cursor-pointer select-none hover:bg-ui-hover"
         title="Traduzir para português"
         onMouseDown={(e) => e.preventDefault()}
-        style={{ color: aiTranslate ? '#89b4fa' : '#585b70' }}
+        style={{ color: aiTranslate ? '#89b4fa' : 'var(--color-scrollbar)' }}
       >
         <input
           type="checkbox"
@@ -196,7 +196,7 @@ export function EditorToolbar({
       </button>
 
       {/* Auxiliary actions */}
-      <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: '#313244' }} />
+      <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: 'var(--color-border)' }} />
       <button
         onMouseDown={(e) => { e.preventDefault(); onImport?.() }}
         title="Importar arquivos (.md, .txt)"
@@ -219,7 +219,7 @@ export function EditorToolbar({
         onMouseDown={(e) => { e.preventDefault(); onToggleHide() }}
         title={contentHidden ? 'Mostrar conteúdo' : 'Ocultar conteúdo'}
         className="flex items-center gap-1 px-2 py-1 rounded text-xs transition-all hover:bg-ui-hover"
-        style={{ color: contentHidden ? 'var(--color-primary)' : '#6c7086' }}
+        style={{ color: contentHidden ? 'var(--color-primary)' : 'var(--color-muted)' }}
       >
         {contentHidden ? <EyeOff size={13} /> : <Eye size={13} />}
       </button>
@@ -232,7 +232,7 @@ export function EditorToolbar({
           onChange={(e) => onNoteFontChange(e.target.value)}
           title="Fonte desta nota"
           className="pl-5 pr-1 py-1 rounded text-[10px] outline-none appearance-none cursor-pointer"
-          style={{ background: 'rgba(37,37,53,0.5)', color: '#a6adc8', border: '1px solid #313244', fontFamily: `'${noteFont}', sans-serif` }}
+          style={{ background: 'rgba(37,37,53,0.5)', color: 'var(--color-muted-2)', border: '1px solid var(--color-border)', fontFamily: `'${noteFont}', sans-serif` }}
         >
           {NOTE_FONTS.map(f => <option key={f} value={f} style={{ fontFamily: `'${f}', sans-serif` }}>{f}</option>)}
         </select>
@@ -246,14 +246,14 @@ export function EditorToolbar({
           onChange={(e) => onZoomChange(parseInt(e.target.value, 10))}
           title="Zoom do editor"
           className="pl-5 pr-1 py-1 rounded text-[10px] outline-none appearance-none cursor-pointer"
-          style={{ background: 'rgba(37,37,53,0.5)', color: '#a6adc8', border: '1px solid #313244' }}
+          style={{ background: 'rgba(37,37,53,0.5)', color: 'var(--color-muted-2)', border: '1px solid var(--color-border)' }}
         >
           {ZOOM_LEVELS.map((z) => <option key={z} value={z}>{z}%</option>)}
         </select>
       </div>
 
       {/* Diagram */}
-      <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: '#313244' }} />
+      <div className="w-px h-5 mx-1 flex-shrink-0" style={{ background: 'var(--color-border)' }} />
       <button
         onClick={onInsertDiagram}
         title="Inserir Diagrama (Excalidraw)"

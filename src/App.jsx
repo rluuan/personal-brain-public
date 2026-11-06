@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { applyTheme } from './themes'
 import {
   ChevronLeft, ChevronRight, BookOpen, Search,
   Plus, Settings, Upload, X,
@@ -44,7 +45,7 @@ function NewNoteModal({ onClose, onCreate }) {
     >
       <div
         className="rounded-xl shadow-2xl p-6 w-full max-w-sm fade-in"
-        style={{ background: '#1e1e2e', border: '1px solid #313244' }}
+        style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-ui-text font-semibold text-sm">Nova Nota</h2>
@@ -60,7 +61,7 @@ function NewNoteModal({ onClose, onCreate }) {
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') onClose() }}
           className="w-full px-3 py-2 rounded-lg text-xs outline-none mb-4"
-          style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }}
+          style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }}
         />
 
         <label className="block text-xs text-ui-muted mb-1">Pasta (opcional)</label>
@@ -68,7 +69,7 @@ function NewNoteModal({ onClose, onCreate }) {
           value={folderId}
           onChange={(e) => setFolderId(e.target.value)}
           className="w-full mb-5 px-3 py-2 rounded-lg text-sm"
-          style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }}
+          style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }}
         >
           <option value="">— Raiz (sem pasta) —</option>
           {folders.map(f => (
@@ -80,14 +81,14 @@ function NewNoteModal({ onClose, onCreate }) {
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg text-xs text-ui-muted hover:text-ui-text transition-colors"
-            style={{ background: '#252535' }}
+            style={{ background: 'var(--color-panel)' }}
           >
             Cancelar
           </button>
           <button
             onClick={handleCreate}
             className="px-4 py-2 rounded-lg text-xs font-semibold transition-all"
-            style={{ background: 'var(--color-primary)', color: '#1e1e2e' }}
+            style={{ background: 'var(--color-primary)', color: 'var(--color-bg)' }}
           >
             Criar
           </button>
@@ -148,7 +149,7 @@ function ImportModal({ defaultFolderId, onClose }) {
       {files.length > 0 && (
         <div
           className="rounded-xl shadow-2xl p-6 w-full max-w-md fade-in"
-          style={{ background: '#1e1e2e', border: '1px solid #313244' }}
+          style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}
         >
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-ui-text font-semibold text-sm">Importar arquivos</h2>
@@ -160,7 +161,7 @@ function ImportModal({ defaultFolderId, onClose }) {
 
           <ul className="mb-4 max-h-40 overflow-y-auto space-y-1">
             {files.map((f, i) => (
-              <li key={i} className="text-xs text-ui-text flex items-center gap-2 px-2 py-1 rounded" style={{ background: '#252535' }}>
+              <li key={i} className="text-xs text-ui-text flex items-center gap-2 px-2 py-1 rounded" style={{ background: 'var(--color-panel)' }}>
                 <span className="text-ui-accent">⬡</span>
                 <span className="truncate">{f.name}</span>
               </li>
@@ -172,7 +173,7 @@ function ImportModal({ defaultFolderId, onClose }) {
             value={folderId}
             onChange={(e) => setFolderId(e.target.value)}
             className="w-full mb-5 px-3 py-2 rounded-lg text-sm"
-            style={{ background: '#252535', border: '1px solid #45475a', color: '#cdd6f4' }}
+            style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text)' }}
           >
             <option value="">— Raiz (sem pasta) —</option>
             {folders.map(f => (
@@ -184,7 +185,7 @@ function ImportModal({ defaultFolderId, onClose }) {
             <button
               onClick={onClose}
               className="px-4 py-2 rounded-lg text-xs text-ui-muted hover:text-ui-text transition-colors"
-              style={{ background: '#252535' }}
+              style={{ background: 'var(--color-panel)' }}
             >
               Cancelar
             </button>
@@ -192,7 +193,7 @@ function ImportModal({ defaultFolderId, onClose }) {
               onClick={confirmImport}
               disabled={importing}
               className="px-4 py-2 rounded-lg text-xs font-semibold transition-all"
-              style={{ background: 'var(--color-secondary)', color: '#1e1e2e', opacity: importing ? 0.7 : 1 }}
+              style={{ background: 'var(--color-secondary)', color: 'var(--color-bg)', opacity: importing ? 0.7 : 1 }}
             >
               {importing ? 'Importando…' : `Importar ${files.length} nota(s)`}
             </button>
@@ -260,9 +261,11 @@ export default function App() {
 
   // Apply theme CSS variables whenever settings change
   useEffect(() => {
-    document.documentElement.style.setProperty('--color-primary',   settings.primaryColor   || '#cba6f7')
-    document.documentElement.style.setProperty('--color-secondary', settings.secondaryColor || '#89b4fa')
-  }, [settings.primaryColor, settings.secondaryColor])
+    applyTheme(settings.extra?.themeId || 'sinapse', {
+      primary: settings.primaryColor,
+      secondary: settings.secondaryColor,
+    })
+  }, [settings.extra?.themeId, settings.primaryColor, settings.secondaryColor])
 
   useEffect(() => { load() }, [load])
 
@@ -370,7 +373,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center" style={{ background: '#0d0d1a' }}>
+      <div className="flex h-screen items-center justify-center" style={{ background: 'var(--color-app-bg)' }}>
         <ParticleBackground />
         <div className="relative z-10 text-center text-ui-muted">
           <div className="text-4xl mb-3 animate-pulse">⬡</div>
@@ -449,11 +452,11 @@ export default function App() {
               width: 4,
               flexShrink: 0,
               cursor: 'col-resize',
-              background: '#313244',
+              background: 'var(--color-border)',
               transition: 'background 0.15s',
             }}
             onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
-            onMouseOut={(e)  => (e.currentTarget.style.background = '#313244')}
+            onMouseOut={(e)  => (e.currentTarget.style.background = 'var(--color-border)')}
           />
         )}
 
@@ -496,11 +499,11 @@ export default function App() {
                   width: 4,
                   flexShrink: 0,
                   cursor: 'col-resize',
-                  background: '#313244',
+                  background: 'var(--color-border)',
                   transition: 'background 0.15s',
                 }}
                 onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-primary)')}
-                onMouseOut={(e)  => (e.currentTarget.style.background = '#313244')}
+                onMouseOut={(e)  => (e.currentTarget.style.background = 'var(--color-border)')}
               />
             )}
 

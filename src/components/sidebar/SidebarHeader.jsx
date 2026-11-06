@@ -6,7 +6,7 @@ export function SidebarHeader({
   createFolder, onImport, createNote, onLiveMemoryHistory
 }) {
   return (
-    <div className="flex items-center justify-between px-3 py-2.5 flex-shrink-0 relative" style={{ borderBottom: '1px solid #313244' }}>
+    <div className="flex items-center justify-between px-3 py-2.5 flex-shrink-0 relative" style={{ borderBottom: '1px solid var(--color-border)' }}>
       <div className="flex items-center gap-1.5 z-10 relative">
         <span className="text-ui-accent text-sm">⬡</span>
         <span className="text-ui-accent font-semibold text-sm hidden sm:inline">{projectName || 'Personal Brain'}</span>
@@ -14,7 +14,7 @@ export function SidebarHeader({
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <button onClick={onSync} title="Sync IA"
           className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold text-ui-muted hover:text-ui-accent hover:bg-ui-hover transition-colors pointer-events-auto"
-          style={{ border: '1px solid #45475a' }}>
+          style={{ border: '1px solid var(--color-border-strong)' }}>
           <RefreshCw size={11} /><span>Sync IA</span>
         </button>
       </div>

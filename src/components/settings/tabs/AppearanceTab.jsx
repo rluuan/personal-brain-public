@@ -1,5 +1,6 @@
 import React from 'react'
 import { Check } from 'lucide-react'
+import { THEMES } from '../../../themes'
 
 const PRIMARY_PRESETS = [
   { label: 'Lavanda',  value: '#cba6f7' },
@@ -9,7 +10,7 @@ const PRIMARY_PRESETS = [
   { label: 'Amarelo',  value: '#f9e2af' },
   { label: 'Pêssego',  value: '#fab387' },
   { label: 'Vermelho', value: '#f38ba8' },
-  { label: 'Branco',   value: '#cdd6f4' },
+  { label: 'Branco',   value: 'var(--color-text)' },
 ]
 
 const SECONDARY_PRESETS = [
@@ -20,7 +21,7 @@ const SECONDARY_PRESETS = [
   { label: 'Amarelo',  value: '#f9e2af' },
   { label: 'Coral',    value: '#fab387' },
   { label: 'Rosa',     value: '#f5c2e7' },
-  { label: 'Branco',   value: '#cdd6f4' },
+  { label: 'Branco',   value: 'var(--color-text)' },
 ]
 
 const FONT_OPTIONS = [
@@ -33,9 +34,36 @@ const FONT_OPTIONS = [
   { label: 'IBM Plex Mono',        value: 'IBM Plex Mono' },
 ]
 
-export function AppearanceTab({ primary, setPrimary, secondary, setSecondary, fontFamily, setFontFamily }) {
+export function AppearanceTab({ primary, setPrimary, secondary, setSecondary, fontFamily, setFontFamily, themeId, setThemeId }) {
+  const selectTheme = (theme) => {
+    setThemeId(theme.id)
+    setPrimary(theme.vars['--color-primary'])
+    setSecondary(theme.vars['--color-secondary'])
+  }
+
   return (
     <>
+      <div>
+        <label className="block text-xs text-ui-muted uppercase tracking-wider mb-3">Tema</label>
+        <div className="grid grid-cols-2 gap-2 mb-1">
+          {THEMES.map((t) => (
+            <button key={t.id} onClick={() => selectTheme(t)}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-all"
+              style={{
+                background: t.preview.bg,
+                border: `2px solid ${themeId === t.id ? t.preview.accent : 'transparent'}`,
+                outline: `1px solid ${themeId === t.id ? t.preview.accent : 'var(--color-border)'}`,
+                outlineOffset: '-1px',
+              }}>
+              <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: t.preview.accent }} />
+              <span className="text-xs font-semibold" style={{ color: t.preview.accent }}>{t.label}</span>
+              {themeId === t.id && <Check size={12} style={{ color: t.preview.accent, marginLeft: 'auto' }} strokeWidth={3} />}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-ui-muted mt-1.5 px-1">Define fundo, bordas e texto. Salve para aplicar.</p>
+      </div>
+
       <div>
         <label className="block text-xs text-ui-muted uppercase tracking-wider mb-3">Cor primária</label>
         <div className="flex flex-wrap gap-2 mb-2">
@@ -43,7 +71,7 @@ export function AppearanceTab({ primary, setPrimary, secondary, setSecondary, fo
             <button key={p.value} onClick={() => setPrimary(p.value)} title={p.label}
               className="w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:scale-110"
               style={{ background: p.value, outline: primary === p.value ? `2px solid ${p.value}` : '2px solid transparent', outlineOffset: '2px' }}>
-              {primary === p.value && <Check size={12} color="#1e1e2e" strokeWidth={3} />}
+              {primary === p.value && <Check size={12} color="var(--color-bg)" strokeWidth={3} />}
             </button>
           ))}
         </div>
@@ -64,13 +92,13 @@ export function AppearanceTab({ primary, setPrimary, secondary, setSecondary, fo
             <button key={p.value} onClick={() => setSecondary(p.value)} title={p.label}
               className="w-7 h-7 rounded-full flex items-center justify-center transition-transform hover:scale-110"
               style={{ background: p.value, outline: secondary === p.value ? `2px solid ${p.value}` : '2px solid transparent', outlineOffset: '2px' }}>
-              {secondary === p.value && <Check size={12} color="#1e1e2e" strokeWidth={3} />}
+              {secondary === p.value && <Check size={12} color="var(--color-bg)" strokeWidth={3} />}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="rounded-lg px-4 py-3 text-xs space-y-1" style={{ background: '#252535', border: '1px solid #313244' }}>
+      <div className="rounded-lg px-4 py-3 text-xs space-y-1" style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)' }}>
         <div className="text-ui-muted mb-2">Preview do tema:</div>
         <div style={{ color: primary }}>⬡ Nota ativa · Wiki link</div>
         <div style={{ color: secondary }}>🔗 Link externo · #tag · botão</div>
@@ -86,9 +114,9 @@ export function AppearanceTab({ primary, setPrimary, secondary, setSecondary, fo
               className="px-3 py-2 rounded-lg text-xs text-left transition-all"
               style={{
                 fontFamily: `'${f.value}', sans-serif`,
-                background: fontFamily === f.value ? `${primary}20` : '#252535',
-                border: `1px solid ${fontFamily === f.value ? primary : '#45475a'}`,
-                color: fontFamily === f.value ? primary : '#cdd6f4',
+                background: fontFamily === f.value ? `${primary}20` : 'var(--color-panel)',
+                border: `1px solid ${fontFamily === f.value ? primary : 'var(--color-border-strong)'}`,
+                color: fontFamily === f.value ? primary : 'var(--color-text)',
               }}>
               {f.label}
             </button>

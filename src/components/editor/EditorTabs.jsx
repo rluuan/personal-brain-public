@@ -7,7 +7,7 @@ export function EditorTabs({ openTabs, activeNoteId, notes, setActiveNote, close
   return (
     <div
       className="flex items-end flex-shrink-0 overflow-x-auto scrollbar-none"
-      style={{ background: 'rgba(14,14,26,0.9)', borderBottom: '1px solid #313244', minHeight: 34 }}
+      style={{ background: 'rgba(14,14,26,0.9)', borderBottom: '1px solid var(--color-border)', minHeight: 34 }}
     >
       {openTabs.map((tabId) => {
         const tabNote = notes.find(n => n.id === tabId)
@@ -21,9 +21,9 @@ export function EditorTabs({ openTabs, activeNoteId, notes, setActiveNote, close
             style={{
               maxWidth: 180,
               background: isActive ? 'rgba(37,37,53,0.9)' : 'transparent',
-              borderRight: '1px solid #313244',
+              borderRight: '1px solid var(--color-border)',
               borderTop: isActive ? '1px solid var(--color-primary)' : '1px solid transparent',
-              color: isActive ? 'var(--color-primary)' : '#6c7086',
+              color: isActive ? 'var(--color-primary)' : 'var(--color-muted)',
             }}
           >
             <span className="text-[11px] truncate flex-1" style={{ maxWidth: 120 }}>{tabNote.title}</span>

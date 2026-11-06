@@ -101,7 +101,7 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
   }
 
   return (
-    <div className="flex flex-col h-full sidebar-root" style={{ borderRight: '1px solid #313244' }}>
+    <div className="flex flex-col h-full sidebar-root" style={{ borderRight: '1px solid var(--color-border)' }}>
       <SidebarHeader 
         projectName={store.settings.extra?.projectName}
         onSync={onSync}

@@ -29,6 +29,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
   // Form State
   const [primary, setPrimary]         = useState(settings.primaryColor)
   const [secondary, setSecondary]     = useState(settings.secondaryColor)
+  const [themeId, setThemeId]         = useState(settings.extra?.themeId || 'sinapse')
   const [projectName, setProjectName] = useState(settings.extra?.projectName || 'Personal Brain')
   const [aiModel, setAiModel]         = useState(settings.extra?.aiModel || 'gemma3:12b')
   const [embedModel, setEmbedModel]   = useState(settings.extra?.embedModel || 'nomic-embed-text')
@@ -87,10 +88,11 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
       ...settings,
       primaryColor: primary,
       secondaryColor: secondary,
-      extra: { 
-        ...settings.extra, 
-        projectName, aiModel, embedModel, 
-        fontFamily, vimMode, vimrc, 
+      extra: {
+        ...settings.extra,
+        themeId,
+        projectName, aiModel, embedModel,
+        fontFamily, vimMode, vimrc,
         ignoreNovidades, screenKey, liveMemoryEnabled, trackClaudeMemory
       }
     })
@@ -193,10 +195,10 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
     >
       <div
         className="rounded-xl shadow-2xl w-full max-w-3xl fade-in flex flex-col"
-        style={{ background: '#1e1e2e', border: '1px solid #313244', maxHeight: '85vh' }}
+        style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', maxHeight: '85vh' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid #313244' }}>
+        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
           <div className="flex items-center gap-2">
             <Settings size={15} className="text-ui-accent" />
             <span className="text-ui-text font-semibold text-sm">Configurações</span>
@@ -207,7 +209,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
         </div>
 
         {/* Tab Selection */}
-        <div className="flex px-4 pt-1 gap-1 flex-shrink-0 overflow-x-auto scrollbar-thin" style={{ borderBottom: '1px solid #313244' }}>
+        <div className="flex px-4 pt-1 gap-1 flex-shrink-0 overflow-x-auto scrollbar-thin" style={{ borderBottom: '1px solid var(--color-border)' }}>
           {tabs.map(t => {
             const Icon = t.icon
             return (
@@ -238,10 +240,11 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
             />
           )}
           {tab === 'appearance' && (
-            <AppearanceTab 
+            <AppearanceTab
               primary={primary} setPrimary={setPrimary}
               secondary={secondary} setSecondary={setSecondary}
               fontFamily={fontFamily} setFontFamily={setFontFamily}
+              themeId={themeId} setThemeId={setThemeId}
             />
           )}
           {tab === 'vim' && (
@@ -298,7 +301,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: '1px solid #313244', background: 'rgba(22,22,34,0.3)' }}>
+        <div className="px-5 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: '1px solid var(--color-border)', background: 'rgba(22,22,34,0.3)' }}>
           <div className="text-[10px] text-ui-muted">
             v1.5.0 SOLID · {user?.nickname}
           </div>
@@ -310,7 +313,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
               onClick={handleSave}
               disabled={saving}
               className="px-5 py-2 rounded-lg text-xs font-bold shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-              style={{ background: primary, color: '#1e1e2e' }}
+              style={{ background: primary, color: 'var(--color-bg)' }}
             >
               {saving ? 'Salvando...' : 'Salvar Alterações'}
             </button>

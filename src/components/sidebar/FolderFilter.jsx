@@ -11,9 +11,9 @@ export function FolderFilter({ folderFilter, setFolderFilter }) {
           onChange={(e) => setFolderFilter(e.target.value)}
           placeholder="Filtrar pastas..."
           className="w-full pl-7 pr-7 py-1.5 rounded-lg text-xs outline-none transition-all"
-          style={{ background: '#252535', border: '1px solid #313244', color: '#cdd6f4', caretColor: 'var(--color-primary)' }}
+          style={{ background: 'var(--color-panel)', border: '1px solid var(--color-border)', color: 'var(--color-text)', caretColor: 'var(--color-primary)' }}
           onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-          onBlur={(e) => (e.target.style.borderColor = '#313244')}
+          onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
         />
         {folderFilter && (
           <button

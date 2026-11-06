@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { EyeOff } from 'lucide-react'
 import { useNotesStore } from '../store/useNotesStore'
-import { getWikiQuery } from '../utils/markdownUtils'
+import { getWikiQuery, getSlashQuery, getTableContext } from '../utils/markdownUtils'
 import { getLanguageMetadata } from '../utils/languageUtils'
+import { filterSlashCommands } from './editor/slashCommands'
+import { parseTable, serializeTable, insertRow, deleteRow, moveRow, insertColumn, deleteColumn, setAlign, offsetForRow } from './editor/tableEditing'
 
 // Sub-components
 import MarkdownPreview from './MarkdownPreview'
@@ -15,6 +17,8 @@ import { EditorTabs } from './editor/EditorTabs'
 import { EditorHeader } from './editor/EditorHeader'
 import { EditorToolbar } from './editor/EditorToolbar'
 import { WikiSuggest } from './editor/WikiSuggest'
+import { SlashSuggest } from './editor/SlashSuggest'
+import { TableToolbar } from './editor/TableToolbar'
 import { SpeechBrain } from './SpeechBrain'
 
 const noteFontKey = (id) => `personal-brain-note-font-${id}`
@@ -158,16 +162,97 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
         .slice(0, 6)
       const coords = vimEditorRef.current?.getCursorPosition?.() || {}
       setWikiSuggest({ query, items, selectedIdx: 0, ...coords })
-    } else {
-      setWikiSuggest(null)
+      setSlashSuggest(null)
+      return
     }
+    setWikiSuggest(null)
+
+    const slashQuery = getSlashQuery(info.doc, info.cursor)
+    if (slashQuery !== null) {
+      const items = filterSlashCommands(slashQuery)
+      const coords = vimEditorRef.current?.getCursorPosition?.() || {}
+      setSlashSuggest(items.length > 0 ? { query: slashQuery, items, selectedIdx: 0, ...coords } : null)
+    } else {
+      setSlashSuggest(null)
+    }
+
+    updateTableContext()
   }
 
   const [wikiSuggest, setWikiSuggest] = useState(null)
+  const [slashSuggest, setSlashSuggest] = useState(null)
 
   const applySuggestion = (title) => {
     setWikiSuggest(null)
     vimEditorRef.current?.replaceWikiText(title)
+  }
+
+  const applySlashCommand = (cmd) => {
+    setSlashSuggest(null)
+    vimEditorRef.current?.applySlashCommand(cmd.before || '', cmd.after || '')
+    if (cmd.special === 'image') handleInsertImage()
+    else if (cmd.special === 'diagram') insertDiagram()
+  }
+
+  // ── Toolbar de tabela ────────────────────────────────────────────────────
+  const [tableContext, setTableContext] = useState(null)
+
+  const updateTableContext = useCallback(() => {
+    const info = vimEditorRef.current?.getCursorAndDoc()
+    if (!info) { setTableContext(null); return }
+    const ctx = getTableContext(info.doc, info.cursor)
+    if (!ctx) { setTableContext(null); return }
+    const table = parseTable(ctx.text)
+    const dataRowIndex = ctx.rowIndex <= 1 ? null : ctx.rowIndex - 2
+    const coords = vimEditorRef.current?.getCursorTopPosition?.()
+    if (!coords) { setTableContext(null); return }
+    setTableContext({
+      tableFrom: ctx.tableFrom,
+      tableTo: ctx.tableTo,
+      colIndex: ctx.colIndex,
+      dataRowIndex,
+      rowCount: table.rows.length,
+      align: table.aligns[ctx.colIndex] || null,
+      x: coords.x,
+      bottom: coords.bottom,
+    })
+  }, [])
+
+  const applyTableAction = (action, payload) => {
+    const info = vimEditorRef.current?.getCursorAndDoc()
+    if (!info) return
+    const ctx = getTableContext(info.doc, info.cursor)
+    if (!ctx) return
+    const table = parseTable(ctx.text)
+    const dataRowIndex = ctx.rowIndex <= 1 ? null : ctx.rowIndex - 2
+    const colIndex = ctx.colIndex
+
+    let newTable = table
+    let focusRowIndex = ctx.rowIndex
+
+    if (action === 'align') {
+      newTable = setAlign(table, colIndex, payload)
+    } else if (action === 'insertRow') {
+      const r = insertRow(table, dataRowIndex, payload)
+      newTable = r.table
+      focusRowIndex = r.newDataRowIndex + 2
+    } else if (action === 'deleteRow') {
+      const r = deleteRow(table, dataRowIndex)
+      newTable = r.table
+      focusRowIndex = r.focusDataRowIndex == null ? 0 : r.focusDataRowIndex + 2
+    } else if (action === 'moveRow') {
+      const r = moveRow(table, dataRowIndex, payload)
+      newTable = r.table
+      focusRowIndex = (r.focusDataRowIndex ?? 0) + 2
+    } else if (action === 'insertColumn') {
+      newTable = insertColumn(table, colIndex, payload).table
+    } else if (action === 'deleteColumn') {
+      newTable = deleteColumn(table, colIndex).table
+    }
+
+    const newText = serializeTable(newTable)
+    const cursorOffset = offsetForRow(newText, focusRowIndex)
+    vimEditorRef.current?.replaceRange(ctx.tableFrom, ctx.tableTo, newText, cursorOffset)
   }
 
   const handleAiFormat = useCallback(async () => {
@@ -297,22 +382,32 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
     setInterimSpeech(interim || '')
   }
 
-  // ── Wiki suggest refs ─────────────────────────────────────────────────────
+  // ── Wiki/slash suggest refs ─────────────────────────────────────────────────
   const wikiSuggestRef    = useRef(null)
+  const slashSuggestRef   = useRef(null)
   const wikiKeyHandlerRef = useRef(null)
 
-  // Keeps wikiSuggestRef in sync so the key handler sees latest state
+  // Keeps as refs em dia pro key handler ver o estado mais recente
   useEffect(() => { wikiSuggestRef.current = wikiSuggest }, [wikiSuggest])
+  useEffect(() => { slashSuggestRef.current = slashSuggest }, [slashSuggest])
 
   // Set once — checked by VimEditor's internal keymap
   useEffect(() => {
     wikiKeyHandlerRef.current = (key) => {
       const ws = wikiSuggestRef.current
-      if (!ws || ws.items.length === 0) return false
-      if (key === 'ArrowDown') { setWikiSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx + 1) % prev.items.length })); return true }
-      if (key === 'ArrowUp')   { setWikiSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx - 1 + prev.items.length) % prev.items.length })); return true }
-      if (key === 'Enter')     { const item = ws.items[ws.selectedIdx]; if (item) applySuggestion(item.title); return true }
-      if (key === 'Escape')    { setWikiSuggest(null); return true }
+      if (ws && ws.items.length > 0) {
+        if (key === 'ArrowDown') { setWikiSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx + 1) % prev.items.length })); return true }
+        if (key === 'ArrowUp')   { setWikiSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx - 1 + prev.items.length) % prev.items.length })); return true }
+        if (key === 'Enter')     { const item = ws.items[ws.selectedIdx]; if (item) applySuggestion(item.title); return true }
+        if (key === 'Escape')    { setWikiSuggest(null); return true }
+      }
+      const ss = slashSuggestRef.current
+      if (ss && ss.items.length > 0) {
+        if (key === 'ArrowDown') { setSlashSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx + 1) % prev.items.length })); return true }
+        if (key === 'ArrowUp')   { setSlashSuggest(prev => ({ ...prev, selectedIdx: (prev.selectedIdx - 1 + prev.items.length) % prev.items.length })); return true }
+        if (key === 'Enter')     { const item = ss.items[ss.selectedIdx]; if (item) applySlashCommand(item); return true }
+        if (key === 'Escape')    { setSlashSuggest(null); return true }
+      }
       return false
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -491,7 +586,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
             <div className="text-5xl mb-4 opacity-30">⬡</div>
             <div className="text-sm mb-2">Selecione uma nota para abrir</div>
             {homeNote && (
-              <button onClick={() => setActiveNote(homeNote.id)} className="mt-2 px-4 py-2 rounded-lg text-xs font-medium bg-ui-accent text-[#1e1e2e]">
+              <button onClick={() => setActiveNote(homeNote.id)} className="mt-2 px-4 py-2 rounded-lg text-xs font-medium bg-ui-accent text-[var(--color-bg)]">
                 🚀 Ver Últimas Novidades
               </button>
             )}
@@ -560,7 +655,7 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-ui-muted opacity-40">
             <EyeOff size={32} className="mx-auto mb-3" />
-            <button onClick={toggleHide} className="mt-4 px-4 py-2 rounded-lg text-xs font-medium bg-ui-accent text-[#1e1e2e] opacity-100">Mostrar conteúdo</button>
+            <button onClick={toggleHide} className="mt-4 px-4 py-2 rounded-lg text-xs font-medium bg-ui-accent text-[var(--color-bg)] opacity-100">Mostrar conteúdo</button>
           </div>
         </div>
       ) : (
@@ -584,14 +679,17 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
                   if (match) expandDiagram(match[1])
                 }}
                 onSave={(val) => { if (activeNote) updateNote(activeNote.id, { content: expandFolds(val) }) }}
+                onCursorActivity={updateTableContext}
               />
               <WikiSuggest suggest={wikiSuggest} onApply={applySuggestion} onClose={() => setWikiSuggest(null)} />
+              <SlashSuggest suggest={slashSuggest} onApply={applySlashCommand} onClose={() => setSlashSuggest(null)} />
+              <TableToolbar context={tableContext} onAction={applyTableAction} />
             </div>
           )}
 
           {showEditor && showPreview && (
             <div onMouseDown={(e) => startPanelDrag('tri-left', e)}
-              className="w-1 cursor-col-resize bg-[#313244] hover:bg-ui-accent transition-colors z-10" />
+              className="w-1 cursor-col-resize bg-[var(--color-border)] hover:bg-ui-accent transition-colors z-10" />
           )}
 
           {showPreview && (
@@ -623,17 +721,17 @@ export default function Editor({ onImport, showNotification, revealInExplorer })
 
           {(mode === 'graph' || mode === 'chat') && (
             <div onMouseDown={(e) => startPanelDrag('tri-mid', e)} 
-              className="w-1 cursor-col-resize bg-[#313244] hover:bg-ui-accent transition-colors z-10" />
+              className="w-1 cursor-col-resize bg-[var(--color-border)] hover:bg-ui-accent transition-colors z-10" />
           )}
 
           {mode === 'graph' && (
-            <div className="flex-1 bg-[#1e1e2e]/50"><InlineGraph notes={notes} activeNoteId={activeNoteId} onSelect={setActiveNote} /></div>
+            <div className="flex-1 bg-[var(--color-bg)]/50"><InlineGraph notes={notes} activeNoteId={activeNoteId} onSelect={setActiveNote} /></div>
           )}
           {mode === 'chat' && (
-            <div className="flex-1 bg-[#1e1e2e]/50 border-l border-[#313244]"><ChatPanel activeNote={activeNote} notes={notes} /></div>
+            <div className="flex-1 bg-[var(--color-bg)]/50 border-l border-[var(--color-border)]"><ChatPanel activeNote={activeNote} notes={notes} /></div>
           )}
           {mode === 'graph-full' && (
-            <div className="absolute inset-0 z-40 bg-[#1e1e2e]"><InlineGraph notes={notes} activeNoteId={activeNoteId} onSelect={setActiveNote} fullScreen /></div>
+            <div className="absolute inset-0 z-40 bg-[var(--color-bg)]"><InlineGraph notes={notes} activeNoteId={activeNoteId} onSelect={setActiveNote} fullScreen /></div>
           )}
         </div>
       )}
