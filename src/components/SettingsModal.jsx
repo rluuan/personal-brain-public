@@ -29,7 +29,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
   // Form State
   const [primary, setPrimary]         = useState(settings.primaryColor)
   const [secondary, setSecondary]     = useState(settings.secondaryColor)
-  const [themeId, setThemeId]         = useState(settings.extra?.themeId || 'sinapse')
+  const [themeId, setThemeId]         = useState(settings.extra?.themeId || 'dracula')
   const [projectName, setProjectName] = useState(settings.extra?.projectName || 'Personal Brain')
   const [aiModel, setAiModel]         = useState(settings.extra?.aiModel || 'gemma3:12b')
   const [embedModel, setEmbedModel]   = useState(settings.extra?.embedModel || 'nomic-embed-text')
@@ -301,7 +301,7 @@ export default function SettingsModal({ onClose, showNotification, revealInExplo
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: '1px solid var(--color-border)', background: 'rgba(22,22,34,0.3)' }}>
+        <div className="px-5 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: '1px solid var(--color-border)', background: 'rgba(var(--color-bg-rgb),0.3)' }}>
           <div className="text-[10px] text-ui-muted">
             v1.5.0 SOLID · {user?.nickname}
           </div>

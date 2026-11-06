@@ -59,7 +59,7 @@ export function TagsSection({ tags, tagColors = {}, activeFilter, onSelect, onCo
                 key={tag}
                 className="group/tag tag-pill text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 cursor-pointer transition-all"
                 style={{
-                  background: isActive ? (color ? `${color}33` : 'rgba(203,166,247,0.25)') : (color ? `${color}1a` : 'rgba(49,49,85,0.4)'),
+                  background: isActive ? (color ? `${color}33` : 'rgba(203,166,247,0.25)') : (color ? `${color}1a` : 'rgba(var(--color-panel-rgb),0.4)'),
                   color: color || 'var(--color-primary)',
                   border: `1px solid ${color ? `${color}55` : 'rgba(203,166,247,0.2)'}`,
                 }}

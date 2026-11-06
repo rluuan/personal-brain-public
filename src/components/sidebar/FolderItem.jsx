@@ -22,7 +22,7 @@ export function FolderItem({ folder, notes, subfolders, allFolders, activeFilter
     <div style={{ paddingLeft: depth * 10 }}>
       <div
         className="group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer hover:bg-ui-hover/40 transition-all"
-        style={isActive ? { background: 'rgba(49,49,85,0.7)' } : {}}
+        style={isActive ? { background: 'rgba(var(--color-panel-rgb),0.7)' } : {}}
       >
         <button onClick={() => setOpen(!open)} className="flex-shrink-0 text-ui-muted">
           {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}

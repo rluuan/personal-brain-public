@@ -1,4 +1,14 @@
-import { ViewPlugin, Decoration, EditorView } from '@codemirror/view'
+import { ViewPlugin, Decoration, EditorView, WidgetType } from '@codemirror/view'
+
+class TableVLineWidget extends WidgetType {
+  toDOM() {
+    const span = document.createElement('span')
+    span.className = 'cm-live-table-vline'
+    return span
+  }
+  eq() { return true }
+  ignoreEvent() { return false }
+}
 import { syntaxTree } from '@codemirror/language'
 
 const HEADING_LEVEL = {
@@ -88,21 +98,28 @@ function buildDecorations(view) {
             const pipePositions = []
             for (let i = 0; i < text.length; i++) if (text[i] === '|') pipePositions.push(i)
 
+            const isDelimRow = ln === fromLine + 1
             const isBorder = (i) => i === trimStart || i === trimEnd - 1
             pipePositions.forEach((i) => {
+              const pos = docLine.from + i
               if (isBorder(i)) {
-                if (!touchesLine) hide(docLine.from + i, docLine.from + i + 1)
-              } else {
-                mark(docLine.from + i, docLine.from + i + 1, 'cm-live-table-pipe')
+                if (!touchesLine) hide(pos, pos + 1)
+              } else if (!isDelimRow) {
+                if (touchesLine) {
+                  mark(pos, pos + 1, 'cm-live-table-pipe')
+                } else {
+                  items.push({ from: pos, to: pos + 1, deco: Decoration.replace({ widget: new TableVLineWidget() }) })
+                }
+              } else if (!touchesLine) {
+                hide(pos, pos + 1)
               }
             })
 
-            const isDelimRow = ln === fromLine + 1
             const rowClass = ln === fromLine
-              ? 'cm-live-table-header'
+              ? 'cm-live-table-header cm-live-table-block'
               : isDelimRow
-                ? (touchesLine ? 'cm-live-table-delim-edit' : 'cm-live-table-delim')
-                : 'cm-live-table-row'
+                ? (touchesLine ? 'cm-live-table-delim-edit cm-live-table-block' : 'cm-live-table-delim')
+                : (ln === toLine ? 'cm-live-table-row cm-live-table-block cm-live-table-last' : 'cm-live-table-row cm-live-table-block')
             line(docLine.from, rowClass)
           }
           return
@@ -156,8 +173,38 @@ export const livePreviewTheme = EditorView.baseTheme({
   '.cm-live-list-d3': { color: '#f9e2af', fontWeight: '700' },
   '.cm-live-list-d4': { color: '#cba6f7', fontWeight: '700' },
   '.cm-live-table-pipe': { color: 'rgba(166,173,200,0.35)' },
-  '.cm-live-table-header': { fontWeight: '700', borderBottom: '1px solid rgba(255,255,255,0.12)' },
+  '.cm-live-table-vline': {
+    display: 'inline-block',
+    width: '0',
+    height: '1.3em',
+    verticalAlign: 'middle',
+    borderLeft: '1px solid var(--color-border-strong)',
+    margin: '0 6px',
+  },
+  '.cm-live-table-block': {
+    background: 'var(--color-panel)',
+    display: 'inline-block',
+    minWidth: '100%',
+    boxSizing: 'border-box',
+    padding: '4px 10px',
+  },
+  '.cm-live-table-header': {
+    fontWeight: '700',
+    borderTop: '1px solid var(--color-border-strong)',
+    borderLeft: '1px solid var(--color-border-strong)',
+    borderRight: '1px solid var(--color-border-strong)',
+    borderRadius: '6px 6px 0 0',
+    marginTop: '2px',
+  },
   '.cm-live-table-delim': { color: 'transparent', fontSize: '1px', lineHeight: '4px' },
   '.cm-live-table-delim-edit': { opacity: '0.4' },
-  '.cm-live-table-row': { borderBottom: '1px solid rgba(255,255,255,0.06)' },
+  '.cm-live-table-row': {
+    borderLeft: '1px solid var(--color-border-strong)',
+    borderRight: '1px solid var(--color-border-strong)',
+  },
+  '.cm-live-table-last': {
+    borderBottom: '1px solid var(--color-border-strong)',
+    borderRadius: '0 0 6px 6px',
+    marginBottom: '2px',
+  },
 })

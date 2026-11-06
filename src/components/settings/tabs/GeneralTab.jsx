@@ -57,7 +57,7 @@ function ToggleButton({ value, onChange, color }) {
       onClick={() => onChange(v => !v)}
       className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
       style={{
-        background: value ? `${color}26` : 'rgba(69,71,90,0.4)',
+        background: value ? `${color}26` : 'rgba(var(--color-border-strong-rgb),0.4)',
         border: `1px solid ${value ? color : 'var(--color-border-strong)'}`,
         color: value ? color : 'var(--color-muted)',
         minWidth: 64,

@@ -21,7 +21,7 @@ export function StatusSection({ notes, statuses, activeFilter, onSelect, onOpenB
                 key={status.id}
                 onClick={() => onSelect(isActive ? null : status.id)}
                 className="flex items-center gap-1.5 px-2 py-1 rounded text-xs transition-all"
-                style={isActive ? { background: 'rgba(49,49,85,0.7)' } : {}}
+                style={isActive ? { background: 'rgba(var(--color-panel-rgb),0.7)' } : {}}
               >
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: status.color }} />
                 <span className={`flex-1 text-left truncate ${isActive ? 'text-ui-accent font-semibold' : 'text-ui-text'}`}>{status.label}</span>
@@ -32,7 +32,7 @@ export function StatusSection({ notes, statuses, activeFilter, onSelect, onOpenB
           <button
             onClick={onOpenBoard}
             className="flex items-center gap-1.5 px-2 py-1 mt-1 rounded text-xs transition-all"
-            style={boardActive ? { background: 'rgba(49,49,85,0.7)' } : {}}
+            style={boardActive ? { background: 'rgba(var(--color-panel-rgb),0.7)' } : {}}
           >
             <LayoutDashboard size={12} className="flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
             <span className={`flex-1 text-left ${boardActive ? 'text-ui-accent font-semibold' : 'text-ui-text'}`}>Quadro</span>

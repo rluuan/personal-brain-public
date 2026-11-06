@@ -31,7 +31,7 @@ export function SidebarFooter({ user, noteCount, onShowMetrics, onSettings, onLo
   return (
     <div className="flex flex-col flex-shrink-0">
       {/* Github Credits */}
-      <div className="px-3 py-1.5 flex items-center justify-center gap-1.5" style={{ background: 'rgba(18,18,30,0.3)', borderTop: '1px solid var(--color-border)' }}>
+      <div className="px-3 py-1.5 flex items-center justify-center gap-1.5" style={{ background: 'rgba(var(--color-bg-rgb),0.3)', borderTop: '1px solid var(--color-border)' }}>
         <a
           href="https://github.com/rluuan"
           target="_blank"
@@ -83,7 +83,7 @@ export function SidebarFooter({ user, noteCount, onShowMetrics, onSettings, onLo
 
       {/* Main Footer Row */}
       <div className="px-3 py-2.5 flex items-center justify-between gap-2"
-        style={{ borderTop: '1px solid var(--color-border)', background: 'rgba(18,18,30,0.6)' }}>
+        style={{ borderTop: '1px solid var(--color-border)', background: 'rgba(var(--color-bg-rgb),0.6)' }}>
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-primary)', color: 'var(--color-bg)' }}>
             <User size={14} />

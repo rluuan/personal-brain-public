@@ -123,7 +123,7 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
         <button
           onClick={() => setNoteFilter('all')}
           className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer hover:bg-ui-hover/40 transition-all"
-          style={noteFilter.type === 'all' ? { background: 'rgba(49,49,85,0.7)' } : {}}
+          style={noteFilter.type === 'all' ? { background: 'rgba(var(--color-panel-rgb),0.7)' } : {}}
         >
           <Layers size={12} className="flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
           <span className={`text-xs flex-1 text-left ${noteFilter.type === 'all' ? 'text-ui-accent font-semibold' : 'text-ui-text'}`}>Todas as notas</span>
@@ -134,7 +134,7 @@ export default function Sidebar({ onSearch, onSync, onSettings, onImport, onLive
           <button
             onClick={() => setNoteFilter('folder', null)}
             className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer hover:bg-ui-hover/40 transition-all"
-            style={noteFilter.type === 'folder' && noteFilter.value === null ? { background: 'rgba(49,49,85,0.7)' } : {}}
+            style={noteFilter.type === 'folder' && noteFilter.value === null ? { background: 'rgba(var(--color-panel-rgb),0.7)' } : {}}
           >
             <Inbox size={12} className="flex-shrink-0 text-ui-muted" />
             <span className={`text-xs flex-1 text-left ${noteFilter.type === 'folder' && noteFilter.value === null ? 'text-ui-accent font-semibold' : 'text-ui-text'}`}>Sem pasta</span>

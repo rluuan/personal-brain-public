@@ -33,7 +33,7 @@ export function VimTab({ vimMode, setVimMode, vimrc, setVimrc }) {
           onClick={() => setVimMode(v => !v)}
           className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
-            background: vimMode ? 'rgba(166,227,161,0.15)' : 'rgba(69,71,90,0.4)',
+            background: vimMode ? 'rgba(166,227,161,0.15)' : 'rgba(var(--color-border-strong-rgb),0.4)',
             border: `1px solid ${vimMode ? '#a6e3a1' : 'var(--color-border-strong)'}`,
             color: vimMode ? '#a6e3a1' : 'var(--color-muted)',
             minWidth: 64,

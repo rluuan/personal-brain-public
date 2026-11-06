@@ -34,7 +34,7 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
   }
 
   const inputStyle = {
-    background: 'rgba(49,49,68,0.8)',
+    background: 'rgba(var(--color-panel-rgb),0.8)',
     border: '1px solid var(--color-border-strong)',
     caretColor: '#cba6f7',
     color: 'var(--color-text)',
@@ -155,7 +155,7 @@ export default function KeyModal({ hasEncryptedNotes, onConfirm }) {
           disabled={!key.trim()}
           className="w-full py-3 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
           style={{
-            background: key.trim() ? 'rgba(203,166,247,0.2)' : 'rgba(49,49,68,0.4)',
+            background: key.trim() ? 'rgba(203,166,247,0.2)' : 'rgba(var(--color-panel-rgb),0.4)',
             border: `1px solid ${key.trim() ? '#cba6f7' : 'var(--color-border)'}`,
             color: key.trim() ? '#cba6f7' : 'var(--color-muted)',
             cursor: key.trim() ? 'pointer' : 'not-allowed',

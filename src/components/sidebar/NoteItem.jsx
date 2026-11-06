@@ -30,7 +30,7 @@ export function NoteItem({ note, isActive, onSelect, onDelete, onRename, autoEdi
     <div
       onClick={() => onSelect(note.id)}
       className={`group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer text-xs transition-all ${isActive ? 'text-ui-accent' : 'text-ui-text hover:bg-ui-hover/50'}`}
-      style={isActive ? { background: 'rgba(49,49,85,0.7)' } : {}}
+      style={isActive ? { background: 'rgba(var(--color-panel-rgb),0.7)' } : {}}
     >
       <FileText size={12} className="flex-shrink-0 text-ui-muted" />
       {editing ? (

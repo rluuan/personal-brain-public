@@ -3,9 +3,9 @@ import { apiService } from '../../services/apiService'
 import { slugifyStatus, FOLDER_COLORS } from '../../utils/sidebarOptions'
 
 export const createSettingsSlice = (set, get) => ({
-  settings: { 
-    primaryColor: '#cba6f7', 
-    secondaryColor: '#89b4fa', 
+  settings: {
+    primaryColor: '#bd93f9',
+    secondaryColor: '#8be9fd',
     extra: { 
       projectName: 'Personal Brain', 
       aiModel: 'gemma3:12b', 

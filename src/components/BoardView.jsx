@@ -12,7 +12,7 @@ function BoardCard({ note, onOpen, onDragStart }) {
       onDragStart={(e) => onDragStart(e, note.id)}
       onClick={() => onOpen(note.id)}
       className="rounded-lg p-2.5 mb-2 cursor-pointer transition-all hover:-translate-y-0.5"
-      style={{ background: 'rgba(37,37,53,0.7)', border: '1px solid var(--color-border)' }}
+      style={{ background: 'rgba(var(--color-panel-rgb),0.7)', border: '1px solid var(--color-border)' }}
     >
       <div className="flex items-center gap-1.5">
         <FileText size={11} className="flex-shrink-0 text-ui-muted" />
@@ -45,7 +45,7 @@ function AddStatusColumn({ onAdd }) {
   }
 
   return (
-    <div className="flex-shrink-0 w-56 rounded-lg p-2" style={{ background: 'rgba(37,37,53,0.5)', border: '1px solid var(--color-border)' }}>
+    <div className="flex-shrink-0 w-56 rounded-lg p-2" style={{ background: 'rgba(var(--color-panel-rgb),0.5)', border: '1px solid var(--color-border)' }}>
       <input
         autoFocus
         value={label}
@@ -88,7 +88,7 @@ export default function BoardView() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(22,22,34,0.5)' }}>
+      <div className="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(var(--color-bg-rgb),0.5)' }}>
         <span className="text-ui-text text-sm font-medium">Quadro</span>
         <button onClick={() => setShowBoard(false)} className="p-1 rounded hover:bg-ui-hover text-ui-muted" title="Fechar quadro">
           <X size={14} />

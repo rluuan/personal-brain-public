@@ -261,7 +261,7 @@ export default function App() {
 
   // Apply theme CSS variables whenever settings change
   useEffect(() => {
-    applyTheme(settings.extra?.themeId || 'sinapse', {
+    applyTheme(settings.extra?.themeId || 'dracula', {
       primary: settings.primaryColor,
       secondary: settings.secondaryColor,
     })

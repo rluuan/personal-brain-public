@@ -3,22 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --color-app-bg: #0d0d1a;
-  --color-bg-rgb: 14, 14, 26;
-  --color-bg: #1e1e2e;
-  --color-sidebar: #161622;
-  --color-panel: #252535;
-  --color-panel-rgb: 37, 37, 53;
-  --color-border: #313244;
-  --color-border-strong: #45475a;
-  --color-hover: #2a2a3e;
-  --color-active: #313155;
-  --color-text: #cdd6f4;
-  --color-muted: #6c7086;
-  --color-muted-2: #a6adc8;
-  --color-scrollbar: #585b70;
-  --color-primary: #cba6f7;
-  --color-secondary: #89b4fa;
+  --color-app-bg: #20212c;
+  --color-bg-rgb: 32, 33, 44;
+  --color-bg: #282a36;
+  --color-sidebar: #21222c;
+  --color-panel: #2d2f3d;
+  --color-panel-rgb: 45, 47, 61;
+  --color-border: #44475a;
+  --color-border-strong: #6272a4;
+  --color-border-strong-rgb: 98, 114, 164;
+  --color-hover: #343746;
+  --color-active: #44475a;
+  --color-text: #f8f8f2;
+  --color-muted: #6272a4;
+  --color-muted-2: #9aa1c9;
+  --color-scrollbar: #6272a4;
+  --color-primary: #bd93f9;
+  --color-secondary: #8be9fd;
 }
 
 * {

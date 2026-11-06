@@ -42,7 +42,7 @@ export default function NicknameModal({ onConfirm }) {
           maxLength={32}
           className="w-full px-4 py-3 rounded-lg text-ui-text text-sm outline-none mb-4"
           style={{
-            background: 'rgba(49,49,68,0.8)',
+            background: 'rgba(var(--color-panel-rgb),0.8)',
             border: '1px solid var(--color-border-strong)',
             caretColor: '#cba6f7',
           }}
@@ -55,7 +55,7 @@ export default function NicknameModal({ onConfirm }) {
           disabled={!name.trim()}
           className="w-full py-3 rounded-lg font-semibold text-sm transition-all"
           style={{
-            background: name.trim() ? 'rgba(203,166,247,0.2)' : 'rgba(49,49,68,0.4)',
+            background: name.trim() ? 'rgba(203,166,247,0.2)' : 'rgba(var(--color-panel-rgb),0.4)',
             border: `1px solid ${name.trim() ? '#cba6f7' : 'var(--color-border)'}`,
             color: name.trim() ? '#cba6f7' : 'var(--color-muted)',
             cursor: name.trim() ? 'pointer' : 'not-allowed',

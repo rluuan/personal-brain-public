@@ -173,10 +173,10 @@ export default function ChatPanel() {
   const noSource = !rag && !ragLiveMemory && !claudeProject
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'rgba(14,14,26,0.4)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'rgba(var(--color-bg-rgb),0.4)' }}>
       {/* Header */}
       <div className="flex items-center px-4 py-2 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(22,22,34,0.5)' }}>
+        style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(var(--color-bg-rgb),0.5)' }}>
         <span className="text-ui-text text-sm font-medium">💬 Chat</span>
       </div>
 
@@ -190,7 +190,7 @@ export default function ChatPanel() {
             <div
               className="max-w-[80%] rounded-xl px-4 py-2.5 text-sm fade-in"
               style={{
-                background: msg.role === 'user' ? 'rgba(137,180,250,0.12)' : 'rgba(37,37,53,0.5)',
+                background: msg.role === 'user' ? 'rgba(137,180,250,0.12)' : 'rgba(var(--color-panel-rgb),0.5)',
                 border: `1px solid ${msg.role === 'user' ? 'rgba(137,180,250,0.25)' : 'var(--color-border)'}`,
                 color: 'var(--color-text)',
                 whiteSpace: 'pre-wrap',
@@ -223,7 +223,7 @@ export default function ChatPanel() {
           <div className="flex justify-start">
             <span className="mr-2 mt-1 text-ui-muted flex-shrink-0" style={{ fontSize: 16 }}>⬡</span>
             <div className="rounded-xl px-4 py-2.5 text-xs ai-pulse"
-              style={{ background: 'rgba(37,37,53,0.5)', border: '1px solid var(--color-border)', color: '#89b4fa' }}>
+              style={{ background: 'rgba(var(--color-panel-rgb),0.5)', border: '1px solid var(--color-border)', color: '#89b4fa' }}>
               🔍 Buscando{rag ? ' nas notas' : ''}{ragLiveMemory ? ' nos links' : ''}{claudeProject ? ` em "${claudeProject}"` : ''}…
             </div>
           </div>

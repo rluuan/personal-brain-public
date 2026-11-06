@@ -49,7 +49,7 @@ const appTheme = EditorView.theme({
   '.cm-cursor': { borderLeftColor: 'var(--color-primary)', borderLeftWidth: '2px' },
   '.cm-activeLine': { backgroundColor: 'rgba(203,166,247,0.04)' },
   '.cm-gutters': {
-    background: 'rgba(14,14,26,0.85)',
+    background: 'rgba(var(--color-bg-rgb),0.85)',
     borderRight: '1px solid var(--color-border)',
     color: 'var(--color-border-strong)',
     userSelect: 'none',
@@ -460,7 +460,7 @@ const VimEditor = forwardRef(function VimEditor({ value, onChange, onSave, onClo
       {vimMode && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-          padding: '6px 14px', background: 'rgba(14,14,26,0.95)', borderBottom: '1px solid var(--color-bg)',
+          padding: '6px 14px', background: 'rgba(var(--color-bg-rgb),0.95)', borderBottom: '1px solid var(--color-bg)',
         }}>
           <span style={{
             fontSize: 13, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,

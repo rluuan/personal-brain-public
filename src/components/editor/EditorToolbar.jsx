@@ -232,7 +232,7 @@ export function EditorToolbar({
           onChange={(e) => onNoteFontChange(e.target.value)}
           title="Fonte desta nota"
           className="pl-5 pr-1 py-1 rounded text-[10px] outline-none appearance-none cursor-pointer"
-          style={{ background: 'rgba(37,37,53,0.5)', color: 'var(--color-muted-2)', border: '1px solid var(--color-border)', fontFamily: `'${noteFont}', sans-serif` }}
+          style={{ background: 'rgba(var(--color-panel-rgb),0.5)', color: 'var(--color-muted-2)', border: '1px solid var(--color-border)', fontFamily: `'${noteFont}', sans-serif` }}
         >
           {NOTE_FONTS.map(f => <option key={f} value={f} style={{ fontFamily: `'${f}', sans-serif` }}>{f}</option>)}
         </select>
@@ -246,7 +246,7 @@ export function EditorToolbar({
           onChange={(e) => onZoomChange(parseInt(e.target.value, 10))}
           title="Zoom do editor"
           className="pl-5 pr-1 py-1 rounded text-[10px] outline-none appearance-none cursor-pointer"
-          style={{ background: 'rgba(37,37,53,0.5)', color: 'var(--color-muted-2)', border: '1px solid var(--color-border)' }}
+          style={{ background: 'rgba(var(--color-panel-rgb),0.5)', color: 'var(--color-muted-2)', border: '1px solid var(--color-border)' }}
         >
           {ZOOM_LEVELS.map((z) => <option key={z} value={z}>{z}%</option>)}
         </select>

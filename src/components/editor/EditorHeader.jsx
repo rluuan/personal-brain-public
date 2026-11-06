@@ -15,7 +15,7 @@ export function EditorHeader({ activeNote, mode, setMode, onStatusChange, status
   return (
     <div
       className="flex items-center justify-between px-4 py-2 flex-shrink-0"
-      style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(22,22,34,0.5)' }}
+      style={{ borderBottom: '1px solid var(--color-border)', background: 'rgba(var(--color-bg-rgb),0.5)' }}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className="flex items-center gap-2 min-w-0">
@@ -35,7 +35,7 @@ export function EditorHeader({ activeNote, mode, setMode, onStatusChange, status
           onChange={(e) => onStatusChange?.(e.target.value || null)}
           className="px-2 py-0.5 rounded-md text-[10px] outline-none cursor-pointer flex-shrink-0"
           style={{
-            background: statusInfo ? `${statusInfo.color}22` : 'rgba(37,37,53,0.6)',
+            background: statusInfo ? `${statusInfo.color}22` : 'rgba(var(--color-panel-rgb),0.6)',
             color: statusInfo ? statusInfo.color : 'var(--color-muted-2)',
             border: `1px solid ${statusInfo ? `${statusInfo.color}55` : 'var(--color-border-strong)'}`,
           }}
@@ -46,7 +46,7 @@ export function EditorHeader({ activeNote, mode, setMode, onStatusChange, status
         </select>
       </div>
 
-      <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(37,37,53,0.5)' }}>
+      <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(var(--color-panel-rgb),0.5)' }}>
         {MODES.map(({ id, icon: Icon, label, title }) => (
           <button
             key={id}
@@ -55,7 +55,7 @@ export function EditorHeader({ activeNote, mode, setMode, onStatusChange, status
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-all ${
               mode === id ? 'text-ui-accent font-semibold' : 'text-ui-muted hover:text-ui-text'
             }`}
-            style={mode === id ? { background: 'rgba(49,49,85,0.6)' } : {}}
+            style={mode === id ? { background: 'rgba(var(--color-panel-rgb),0.6)' } : {}}
           >
             <Icon size={13} />
             <span className="hidden lg:inline">{label}</span>

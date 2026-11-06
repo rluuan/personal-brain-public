@@ -32,7 +32,7 @@ export function ClaudeMemoryTab({ trackClaudeMemory, setTrackClaudeMemory, prima
           onClick={() => setTrackClaudeMemory(v => !v)}
           className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
-            background: trackClaudeMemory ? '#a78bfa26' : 'rgba(69,71,90,0.4)',
+            background: trackClaudeMemory ? '#a78bfa26' : 'rgba(var(--color-border-strong-rgb),0.4)',
             border: `1px solid ${trackClaudeMemory ? '#a78bfa' : 'var(--color-border-strong)'}`,
             color: trackClaudeMemory ? '#a78bfa' : 'var(--color-muted)',
             minWidth: 64,

@@ -41,7 +41,7 @@ export function RecentNotes({ notes, activeNoteId, onSelect }) {
               key={note.id}
               onClick={() => onSelect(note.id)}
               className={`flex items-center justify-between gap-1.5 px-2 py-1.5 rounded cursor-pointer text-xs transition-all mx-1 ${note.id === activeNoteId ? 'text-ui-accent' : 'text-ui-text hover:bg-ui-hover/50'}`}
-              style={note.id === activeNoteId ? { background: 'rgba(49,49,85,0.7)' } : {}}
+              style={note.id === activeNoteId ? { background: 'rgba(var(--color-panel-rgb),0.7)' } : {}}
             >
               <div className="flex items-center gap-1.5 min-w-0">
                 <FileText size={10} className="flex-shrink-0 text-ui-muted" />

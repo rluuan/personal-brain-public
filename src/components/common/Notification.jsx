@@ -36,7 +36,7 @@ export function Notification({
       <div 
         className="flex items-center gap-4 px-4 py-3 rounded-xl shadow-2xl border border-[var(--color-border)]"
         style={{ 
-          background: 'rgba(30, 30, 46, 0.95)', 
+          background: 'rgba(var(--color-bg-rgb), 0.95)', 
           backdropFilter: 'blur(10px)',
           minWidth: '320px',
           maxWidth: '450px'
